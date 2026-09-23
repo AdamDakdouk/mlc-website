@@ -20,7 +20,7 @@ export async function signToken(payload: TokenPayload): Promise<string> {
 
 export async function verifyToken(token: string): Promise<TokenPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, secretKey);
+    const { payload } = await jwtVerify(token, secretKey, { algorithms: [ALG] });
     if (typeof payload.sub !== "string" || payload.role !== "admin") {
       return null;
     }
