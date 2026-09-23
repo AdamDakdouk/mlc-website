@@ -1,3 +1,8 @@
+// mongoose is pinned to ^8.x (not latest ^9.x): mongoose 9.x bundles mongodb
+// driver 7.6.0, which has a confirmed regression under Jest's node test
+// environment ("Missing required sub-document 'driver' in the client
+// metadata document"). Tracked upstream: typegoose/mongodb-memory-server#1026,
+// MongoDB NODE-7832. Do not bump past ^8.x until that's fixed upstream.
 import mongoose, { type Mongoose } from "mongoose";
 import { env } from "@/lib/env";
 
@@ -23,6 +28,12 @@ export async function connectToDatabase(): Promise<Mongoose> {
     cache.promise = mongoose.connect(env.MONGODB_URI);
   }
 
-  cache.conn = await cache.promise;
+  try {
+    cache.conn = await cache.promise;
+  } catch (err) {
+    cache.promise = null;
+    throw err;
+  }
+
   return cache.conn;
 }
