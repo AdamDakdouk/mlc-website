@@ -101,6 +101,23 @@ describe("POST /api/auth/login", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects a request with a mismatched Origin header", async () => {
+    const { POST } = require("@/app/api/auth/login/route");
+    const req = new NextRequest("http://localhost/api/auth/login", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-forwarded-for": "10.0.0.7",
+        origin: "https://evil.example",
+      },
+      body: JSON.stringify({ email: "admin@example.com", password: "correct-password" }),
+    });
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(403);
+  });
+
   it("rate-limits after 5 failed attempts from the same IP", async () => {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();

@@ -14,11 +14,31 @@ const loginSchema = z.object({
 const RATE_LIMIT = { max: 5, windowMs: 15 * 60 * 1000 };
 const COOKIE_MAX_AGE_SECONDS = 2 * 60 * 60;
 
+// Trusts X-Forwarded-For as-is. This is ONLY safe behind a reverse proxy/CDN
+// that OVERWRITES this header with the real client IP before forwarding
+// (e.g. Vercel, Cloudflare, or an nginx config with proxy_set_header, not
+// proxy_add_header). If this app is ever exposed directly to the internet
+// without such a proxy, a client can spoof this header to defeat rate
+// limiting entirely. Revisit when the production hosting target is chosen.
 function getClientIp(request: NextRequest): string {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 }
 
+function isSameOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) {
+    // No Origin header (e.g. same-origin browser navigation, some non-browser clients) — allow.
+    // Browsers reliably send Origin on cross-site POSTs, which is what we need to block.
+    return true;
+  }
+  return origin === request.nextUrl.origin;
+}
+
 export async function POST(request: NextRequest) {
+  if (!isSameOrigin(request)) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 403 });
+  }
+
   const ip = getClientIp(request);
   const rateLimit = checkRateLimit(`login:${ip}`, RATE_LIMIT);
   if (!rateLimit.allowed) {
@@ -51,6 +71,12 @@ export async function POST(request: NextRequest) {
   // we defensively treat any verification failure — thrown or returned false —
   // as an invalid login rather than letting a 500/stack trace leak from this
   // endpoint.
+  //
+  // Note: response time differs between "unknown email" (returns immediately)
+  // and "wrong password" (runs a ~150-300ms bcrypt compare), which could
+  // theoretically let a timing attack distinguish the two despite the identical
+  // error message. Accepted risk for Phase 1: this is a single, publicly-known
+  // admin email (not a secret), so enumeration has no practical value here.
   let validPassword: boolean;
   try {
     validPassword = await verifyPassword(parsed.data.password, user.passwordHash);
