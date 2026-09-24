@@ -11,6 +11,7 @@ export default function NavLink({ href, children }: { href: string; children: Re
   return (
     <Link
       href={href}
+      aria-current={isActive ? "page" : undefined}
       className={`block rounded px-3 py-2 text-sm transition ${
         isActive ? "bg-white/15 font-medium" : "hover:bg-white/10"
       }`}
