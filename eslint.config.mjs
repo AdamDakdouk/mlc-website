@@ -13,6 +13,17 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // Test files use `require()` to re-import modules after
+    // `jest.resetModules()`, which is the standard way to exercise
+    // module-level singletons (e.g. env parsing, the mongoose connection
+    // cache) under different env-var/mock states between test cases. A
+    // static `import` is hoisted and cached, so it can't express this.
+    files: ["**/__tests__/**/*.ts", "**/*.test.ts"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
