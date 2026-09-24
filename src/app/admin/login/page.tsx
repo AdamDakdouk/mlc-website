@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-cream">
       <div className="w-full max-w-sm rounded-lg bg-white p-8 shadow-md">
         <div className="mb-6 flex justify-center">
-          <Image src="/images/logo.jpg" alt="MLC logo" width={80} height={80} className="rounded-full" />
+          <Image src="/images/logo.jpg" alt="MLC logo" width={120} height={120} className="rounded-full" />
         </div>
         <h1 className="mb-6 text-center text-xl font-semibold text-navy">
           Admin Login
