@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "seed": "tsx scripts/seedAdmin.ts"
+    "seed": "tsx --env-file=.env.local scripts/seedAdmin.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
