@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import LogoutButton from "./LogoutButton";
+import NavLink from "./NavLink";
 
 const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "Overview" },
@@ -24,13 +24,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
         <nav className="p-2">
           {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="block rounded px-3 py-2 text-sm hover:bg-white/10"
-            >
+            <NavLink key={item.href} href={item.href}>
               {item.label}
-            </Link>
+            </NavLink>
           ))}
         </nav>
       </aside>
