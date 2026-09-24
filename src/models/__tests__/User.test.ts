@@ -63,4 +63,15 @@ describe("User model", () => {
       User.create({ passwordHash: "hashed-value", role: "admin" }),
     ).rejects.toThrow();
   });
+
+  it("rejects an invalid email format", async () => {
+    const { User } = require("@/models/User");
+    await expect(
+      User.create({
+        email: "not-an-email",
+        passwordHash: "hashed-value",
+        role: "admin",
+      }),
+    ).rejects.toThrow();
+  });
 });
