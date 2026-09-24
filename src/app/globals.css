@@ -18,12 +18,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/*
+ * No prefers-color-scheme: dark override — this site uses a fixed
+ * navy/maroon/cream brand theme, not an adaptive dark mode. Without this,
+ * a dark-mode browser/OS would swap --foreground to a near-white color,
+ * making text on light form inputs/cards nearly invisible.
+ */
 
 body {
   background: var(--background);
