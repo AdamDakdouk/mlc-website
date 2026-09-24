@@ -13,6 +13,7 @@ export default function AdminLoginPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (loading) return;
     setError(null);
     setLoading(true);
 
@@ -54,7 +55,9 @@ export default function AdminLoginPage() {
             </label>
             <input
               id="email"
+              name="email"
               type="email"
+              autoComplete="username"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -67,14 +70,20 @@ export default function AdminLoginPage() {
             </label>
             <input
               id="password"
+              name="password"
               type="password"
+              autoComplete="current-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-navy focus:outline-none"
             />
           </div>
-          {error && <p className="text-sm text-maroon">{error}</p>}
+          {error && (
+            <p role="alert" className="text-sm text-maroon">
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={loading}
