@@ -34,6 +34,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# user-uploaded content (local filesystem storage for dev; not source)
+/public/uploads/
+
 # vercel
 .vercel
 
