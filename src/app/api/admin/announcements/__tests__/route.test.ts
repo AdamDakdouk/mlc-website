@@ -1,7 +1,7 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import { NextRequest } from "next/server";
-import { unlink } from "fs/promises";
+import { unlink, readdir } from "fs/promises";
 import path from "path";
 
 const JPEG_BYTES = [0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46];
@@ -141,5 +141,48 @@ describe("POST /api/admin/announcements", () => {
 
     const res = await POST(request);
     expect(res.status).toBe(413);
+  });
+
+  it("cleans up the uploaded image if Announcement.create fails after a successful upload", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { Announcement } = require("@/models/Announcement");
+    const { POST } = require("@/app/api/admin/announcements/route");
+
+    // `deleteImageFile`/`validateAndSaveImage` are re-exported through this
+    // project's ESM-interop transform as getter-only properties on the
+    // required module object, so `jest.spyOn` can't redefine them directly
+    // ("Cannot redefine property"). Rather than fight that, verify the
+    // outcome that actually matters: no file is left behind in the upload
+    // directory after a request that uploads an image but then fails to
+    // persist the announcement. `Announcement.create` itself is a normal
+    // writable static method on the (non-ESM-exported) mongoose Model
+    // object, so spying on it directly works fine.
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "announcements");
+    const before = await readdir(uploadDir).catch(() => [] as string[]);
+
+    const createSpy = jest
+      .spyOn(Announcement, "create")
+      .mockRejectedValueOnce(new Error("simulated DB failure"));
+
+    try {
+      const formData = new FormData();
+      formData.set("title", "Cleanup test");
+      formData.set("body", "This announcement should not be persisted.");
+      formData.set(
+        "image",
+        new File([new Uint8Array(JPEG_BYTES)], "photo.jpg", { type: "image/jpeg" }),
+      );
+
+      await expect(POST(makeRequest(formData))).rejects.toThrow("simulated DB failure");
+
+      const after = await readdir(uploadDir).catch(() => [] as string[]);
+      expect(after.sort()).toEqual(before.sort());
+
+      const count = await Announcement.countDocuments();
+      expect(count).toBe(0);
+    } finally {
+      createSpy.mockRestore();
+    }
   });
 });

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { Announcement } from "@/models/Announcement";
-import { validateAndSaveImage, ImageValidationError } from "@/lib/imageUpload";
+import { validateAndSaveImage, deleteImageFile, ImageValidationError } from "@/lib/imageUpload";
 
 const announcementFieldsSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -24,6 +24,12 @@ const announcementFieldsSchema = z.object({
 // otherwise surface here as a confusing 400 from a broken multipart parse
 // rather than a clear 413. This explicit check gives callers a well-defined
 // "payload too large" response instead.
+//
+// This only covers the declared-Content-Length path: a chunked
+// transfer-encoding request has no Content-Length header and so bypasses
+// this check entirely. That gap is bounded, not unbounded, though — Next's
+// own proxyClientMaxBodySize buffering (see above) still caps what actually
+// reaches this handler at 10MB underneath, even without this guard.
 const MAX_REQUEST_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(request: NextRequest) {
@@ -62,11 +68,21 @@ export async function POST(request: NextRequest) {
   }
 
   await connectToDatabase();
-  const announcement = await Announcement.create({
-    title: parsed.data.title,
-    body: parsed.data.body,
-    imageUrl,
-  });
+  let announcement;
+  try {
+    announcement = await Announcement.create({
+      title: parsed.data.title,
+      body: parsed.data.body,
+      imageUrl,
+    });
+  } catch (err) {
+    // Avoid orphaning an already-saved image file if the DB write fails
+    // after a successful upload.
+    if (imageUrl) {
+      await deleteImageFile(imageUrl);
+    }
+    throw err;
+  }
 
   return NextResponse.json({ id: announcement._id.toString() }, { status: 201 });
 }
