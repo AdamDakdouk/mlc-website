@@ -17,7 +17,8 @@ describe("POST /api/admin/teachers", () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
+    const mongooseFresh = require("mongoose");
+    await mongooseFresh.disconnect();
     await mongod.stop();
   });
 
