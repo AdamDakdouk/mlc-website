@@ -1,5 +1,4 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
-import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 
 describe("PUT /api/admin/teachers/reorder", () => {
