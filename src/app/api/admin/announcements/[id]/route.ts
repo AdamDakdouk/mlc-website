@@ -110,3 +110,34 @@ export async function PUT(
 
   return NextResponse.json({ success: true });
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+
+  await connectToDatabase();
+  const existing = await Announcement.findById(id);
+  if (!existing) {
+    return NextResponse.json({ error: "Announcement not found" }, { status: 404 });
+  }
+
+  const { imageUrl } = existing;
+
+  // Delete the DB record first, then the image file — same ordering
+  // principle as PUT above: commit the authoritative change first, clean up
+  // the filesystem after. If the process dies between these two steps, the
+  // image file is orphaned (harmless — nothing references it any more,
+  // since the record is already gone). Deleting the file first would risk
+  // the opposite: a crash or failure in `deleteOne` after the file is gone
+  // would leave a live DB record pointing at a now-missing image, the same
+  // broken-reference class of bug Task 5 fixed for updates.
+  await Announcement.deleteOne({ _id: id });
+
+  if (imageUrl) {
+    await deleteImageFile(imageUrl);
+  }
+
+  return NextResponse.json({ success: true });
+}

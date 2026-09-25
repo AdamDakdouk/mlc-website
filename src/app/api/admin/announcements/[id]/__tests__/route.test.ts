@@ -245,4 +245,48 @@ describe("/api/admin/announcements/[id]", () => {
       }
     });
   });
+
+  describe("DELETE", () => {
+    function makeRequest(id: string) {
+      return new NextRequest(`http://localhost/api/admin/announcements/${id}`, {
+        method: "DELETE",
+      });
+    }
+
+    it("deletes an announcement and its image file", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+      const { Announcement } = require("@/models/Announcement");
+      const { validateAndSaveImage } = require("@/lib/imageUpload");
+
+      const imageUrl = await validateAndSaveImage(
+        new File([new Uint8Array(JPEG_BYTES)], "photo.jpg", { type: "image/jpeg" }),
+      );
+      const existing = await Announcement.create({ title: "T", body: "B", imageUrl });
+
+      const { DELETE } = require("@/app/api/admin/announcements/[id]/route");
+      const res = await DELETE(makeRequest(existing._id.toString()), {
+        params: Promise.resolve({ id: existing._id.toString() }),
+      });
+      expect(res.status).toBe(200);
+
+      const found = await Announcement.findById(existing._id);
+      expect(found).toBeNull();
+
+      const imagePath = path.join(process.cwd(), "public", imageUrl);
+      await expect(access(imagePath)).rejects.toThrow();
+    });
+
+    it("returns 404 for a non-existent id", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+
+      const { DELETE } = require("@/app/api/admin/announcements/[id]/route");
+      const fakeId = new mongoose.Types.ObjectId().toString();
+      const res = await DELETE(makeRequest(fakeId), {
+        params: Promise.resolve({ id: fakeId }),
+      });
+      expect(res.status).toBe(404);
+    });
+  });
 });
