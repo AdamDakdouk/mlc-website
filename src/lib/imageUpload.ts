@@ -12,7 +12,12 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "announcements");
 
-export class ImageValidationError extends Error {}
+export class ImageValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ImageValidationError";
+  }
+}
 
 function detectImageType(buffer: Buffer): string | null {
   if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
@@ -41,6 +46,12 @@ function detectImageType(buffer: Buffer): string | null {
   return null;
 }
 
+// Note for callers: the size check below happens after the platform has
+// already fully buffered the uploaded file — it does NOT protect against a
+// large-request-body DoS at the network layer; callers must enforce an
+// upstream body-size limit. Validation here is magic-bytes-only (confirms
+// file format, not structural well-formedness) — do not feed the output
+// into an image-decoding/processing step without additional validation.
 export async function validateAndSaveImage(file: File): Promise<string> {
   if (file.size > MAX_SIZE_BYTES) {
     throw new ImageValidationError("Image exceeds 5MB limit");
@@ -65,6 +76,9 @@ export async function validateAndSaveImage(file: File): Promise<string> {
 
 export async function deleteImageFile(imageUrl: string): Promise<void> {
   const filename = path.basename(imageUrl);
+  if (!/^[0-9a-f-]{36}\.(jpg|png|webp)$/.test(filename)) {
+    return;
+  }
   const filePath = path.join(UPLOAD_DIR, filename);
   try {
     await unlink(filePath);

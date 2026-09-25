@@ -70,4 +70,14 @@ describe("imageUpload", () => {
       deleteImageFile("/uploads/announcements/does-not-exist.jpg"),
     ).resolves.not.toThrow();
   });
+
+  it("deleteImageFile no-ops on a path-traversal-style filename instead of unlinking", async () => {
+    await expect(deleteImageFile("..")).resolves.not.toThrow();
+  });
+
+  it("deleteImageFile no-ops on a filename that isn't a UUID-plus-extension", async () => {
+    await expect(
+      deleteImageFile("/uploads/announcements/not-a-uuid.jpg"),
+    ).resolves.not.toThrow();
+  });
 });
