@@ -12,33 +12,44 @@ export default function DeleteAnnouncementButton({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
     if (loading) return;
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
 
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/admin/announcements/${id}`, { method: "DELETE" });
       if (!res.ok) {
-        alert("Failed to delete announcement.");
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "Failed to delete announcement.");
         setLoading(false);
         return;
       }
       router.refresh();
     } catch {
-      alert("Could not reach the server.");
+      setError("Could not reach the server.");
       setLoading(false);
     }
   }
 
   return (
-    <button
-      onClick={handleDelete}
-      disabled={loading}
-      className="text-maroon hover:underline disabled:opacity-50"
-    >
-      {loading ? "Deleting..." : "Delete"}
-    </button>
+    <span>
+      <button
+        onClick={handleDelete}
+        disabled={loading}
+        aria-label={`Delete "${title}"`}
+        className="text-maroon hover:underline disabled:opacity-50"
+      >
+        {loading ? "Deleting..." : "Delete"}
+      </button>
+      {error && (
+        <span role="alert" className="ml-2 text-xs text-maroon">
+          {error}
+        </span>
+      )}
+    </span>
   );
 }
