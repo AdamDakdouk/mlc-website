@@ -5,8 +5,8 @@ import { Announcement } from "@/models/Announcement";
 import { validateAndSaveImage, deleteImageFile, ImageValidationError } from "@/lib/imageUpload";
 
 const announcementFieldsSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  body: z.string().min(1, "Body is required"),
+  title: z.string().min(1, "Title is required").max(200, "Title is too long"),
+  body: z.string().min(1, "Body is required").max(5000, "Body is too long"),
 });
 
 // Headroom above imageUpload's 5MB image cap, to account for form field
@@ -68,8 +68,10 @@ export async function PUT(
   const removeImage = formData.get("removeImage") === "true";
   const imageFile = formData.get("image");
 
+  const oldImageUrl = existing.imageUrl;
+  let newImageUrl = oldImageUrl;
+
   if (imageFile instanceof File && imageFile.size > 0) {
-    let newImageUrl: string;
     try {
       newImageUrl = await validateAndSaveImage(imageFile);
     } catch (err) {
@@ -78,18 +80,33 @@ export async function PUT(
       }
       throw err;
     }
-    if (existing.imageUrl) {
-      await deleteImageFile(existing.imageUrl);
-    }
-    existing.imageUrl = newImageUrl;
-  } else if (removeImage && existing.imageUrl) {
-    await deleteImageFile(existing.imageUrl);
-    existing.imageUrl = null;
+  } else if (removeImage) {
+    newImageUrl = null;
   }
 
   existing.title = parsed.data.title;
   existing.body = parsed.data.body;
-  await existing.save();
+  existing.imageUrl = newImageUrl;
+
+  try {
+    await existing.save();
+  } catch (err) {
+    // Save failed — roll back the newly-uploaded file (if any) so we don't
+    // leak it. The old file and DB record are untouched, so no broken
+    // reference is ever visible — the record still points at oldImageUrl
+    // until save actually succeeds.
+    if (newImageUrl && newImageUrl !== oldImageUrl) {
+      await deleteImageFile(newImageUrl);
+    }
+    throw err;
+  }
+
+  // Only delete the old file once the DB write is confirmed — a crash here
+  // leaves an orphaned old file (harmless, same accepted tradeoff as the
+  // create route), never a broken live reference.
+  if (oldImageUrl && oldImageUrl !== newImageUrl) {
+    await deleteImageFile(oldImageUrl);
+  }
 
   return NextResponse.json({ success: true });
 }

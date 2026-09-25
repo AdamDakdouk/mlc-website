@@ -160,5 +160,89 @@ describe("/api/admin/announcements/[id]", () => {
       const res = await PUT(request, { params: Promise.resolve({ id: fakeId }) });
       expect(res.status).toBe(413);
     });
+
+    it("rejects a title over 200 characters and leaves the existing image untouched", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+      const { Announcement } = require("@/models/Announcement");
+      const { validateAndSaveImage } = require("@/lib/imageUpload");
+
+      const imageUrl = await validateAndSaveImage(
+        new File([new Uint8Array(JPEG_BYTES)], "photo.jpg", { type: "image/jpeg" }),
+      );
+      savedPaths.push(imageUrl);
+      const existing = await Announcement.create({ title: "T", body: "B", imageUrl });
+
+      const { PUT } = require("@/app/api/admin/announcements/[id]/route");
+      const formData = new FormData();
+      formData.set("title", "a".repeat(201));
+      formData.set("body", "B");
+
+      const res = await PUT(makeRequest(existing._id.toString(), formData), {
+        params: Promise.resolve({ id: existing._id.toString() }),
+      });
+      expect(res.status).toBe(400);
+
+      const unchanged = await Announcement.findById(existing._id);
+      expect(unchanged.title).toBe("T");
+      expect(unchanged.imageUrl).toBe(imageUrl);
+
+      const imagePath = path.join(process.cwd(), "public", imageUrl);
+      await expect(access(imagePath)).resolves.toBeUndefined();
+    });
+
+    it("rolls back the newly-uploaded file if save fails, leaving the old file untouched", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+      const { Announcement } = require("@/models/Announcement");
+      const { validateAndSaveImage } = require("@/lib/imageUpload");
+
+      const oldImageUrl = await validateAndSaveImage(
+        new File([new Uint8Array(JPEG_BYTES)], "old.jpg", { type: "image/jpeg" }),
+      );
+      savedPaths.push(oldImageUrl);
+      const existing = await Announcement.create({ title: "T", body: "B", imageUrl: oldImageUrl });
+
+      const { PUT } = require("@/app/api/admin/announcements/[id]/route");
+
+      // Capture the exact path of the newly-uploaded file the same way the
+      // sibling create-route test's cleanup test does, since the route
+      // doesn't surface the generated path in the thrown error.
+      const fsPromises = require("fs/promises");
+      const writeFileSpy = jest.spyOn(fsPromises, "writeFile");
+
+      const saveSpy = jest
+        .spyOn(Announcement.prototype, "save")
+        .mockRejectedValueOnce(new Error("simulated save failure"));
+
+      try {
+        const formData = new FormData();
+        formData.set("title", "T");
+        formData.set("body", "B");
+        formData.set(
+          "image",
+          new File([new Uint8Array(JPEG_BYTES)], "new.jpg", { type: "image/jpeg" }),
+        );
+
+        await expect(
+          PUT(makeRequest(existing._id.toString(), formData), {
+            params: Promise.resolve({ id: existing._id.toString() }),
+          }),
+        ).rejects.toThrow("simulated save failure");
+
+        expect(writeFileSpy).toHaveBeenCalledTimes(1);
+        const newPath = writeFileSpy.mock.calls[0][0] as string;
+        await expect(access(newPath)).rejects.toThrow();
+
+        const unchanged = await Announcement.findById(existing._id);
+        expect(unchanged.imageUrl).toBe(oldImageUrl);
+
+        const oldPath = path.join(process.cwd(), "public", oldImageUrl);
+        await expect(access(oldPath)).resolves.toBeUndefined();
+      } finally {
+        saveSpy.mockRestore();
+        writeFileSpy.mockRestore();
+      }
+    });
   });
 });
