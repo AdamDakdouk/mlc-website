@@ -108,3 +108,34 @@ export async function PUT(
 
   return NextResponse.json({ success: true });
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return NextResponse.json({ error: "Invalid teacher id" }, { status: 400 });
+  }
+
+  await connectToDatabase();
+  const existing = await Teacher.findById(id);
+  if (!existing) {
+    return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
+  }
+  const { photoUrl } = existing;
+
+  // Delete the DB record first, then the photo file — same ordering
+  // principle as PUT above: commit the authoritative change first, clean up
+  // the filesystem after. A crash between these two steps orphans the photo
+  // file (harmless), rather than risking a live record pointing at a
+  // deleted file.
+  await Teacher.deleteOne({ _id: id });
+
+  if (photoUrl) {
+    await deleteImageFile(photoUrl);
+  }
+
+  return NextResponse.json({ success: true });
+}

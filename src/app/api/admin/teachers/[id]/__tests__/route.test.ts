@@ -204,4 +204,60 @@ describe("/api/admin/teachers/[id]", () => {
       expect(res.status).toBe(413);
     });
   });
+
+  describe("DELETE", () => {
+    function makeRequest(id: string) {
+      return new NextRequest(`http://localhost/api/admin/teachers/${id}`, {
+        method: "DELETE",
+      });
+    }
+
+    it("deletes a teacher and their photo file", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+      const { Teacher } = require("@/models/Teacher");
+      const { validateAndSaveImage } = require("@/lib/imageUpload");
+
+      const photoUrl = await validateAndSaveImage(
+        new File([new Uint8Array(JPEG_BYTES)], "photo.jpg", { type: "image/jpeg" }),
+        "teachers",
+      );
+      const existing = await Teacher.create({ name: "T", subjects: ["Math"], photoUrl });
+
+      const { DELETE } = require("@/app/api/admin/teachers/[id]/route");
+      const res = await DELETE(makeRequest(existing._id.toString()), {
+        params: Promise.resolve({ id: existing._id.toString() }),
+      });
+      expect(res.status).toBe(200);
+
+      const found = await Teacher.findById(existing._id);
+      expect(found).toBeNull();
+
+      const photoPath = path.join(process.cwd(), "public", photoUrl);
+      await expect(access(photoPath)).rejects.toThrow();
+    });
+
+    it("returns 404 for a non-existent id", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+
+      const { DELETE } = require("@/app/api/admin/teachers/[id]/route");
+      const fakeId = new mongoose.Types.ObjectId().toString();
+      const res = await DELETE(makeRequest(fakeId), {
+        params: Promise.resolve({ id: fakeId }),
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 400 for a malformed id", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+
+      const { DELETE } = require("@/app/api/admin/teachers/[id]/route");
+      const res = await DELETE(makeRequest("not-an-id"), {
+        params: Promise.resolve({ id: "not-an-id" }),
+      });
+      expect(res.status).toBe(400);
+    });
+  });
 });
