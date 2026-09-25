@@ -30,4 +30,23 @@ describe("proxy", () => {
 
     expect(res.status).toBe(200);
   });
+
+  it("returns a 401 JSON response (not a redirect) for an unauthenticated API request", async () => {
+    const request = new NextRequest("http://localhost/api/admin/announcements");
+    const res = await proxy(request);
+
+    expect(res.status).toBe(401);
+    const data = await res.json();
+    expect(data.error).toBe("Unauthorized");
+  });
+
+  it("allows an authenticated API request through", async () => {
+    const token = await signToken({ sub: "admin@example.com", role: "admin" });
+    const request = new NextRequest("http://localhost/api/admin/announcements", {
+      headers: { cookie: `token=${token}` },
+    });
+    const res = await proxy(request);
+
+    expect(res.status).toBe(200);
+  });
 });

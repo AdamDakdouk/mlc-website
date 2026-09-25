@@ -11,6 +11,9 @@ export async function proxy(request: NextRequest) {
   const payload = token ? await verifyToken(token) : null;
 
   if (!payload) {
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     // request.url reflects whatever protocol/host Next believes it received.
     // Behind a reverse proxy, this depends on X-Forwarded-Proto/Host being set
     // correctly — get that wrong and this redirect could leak an internal
@@ -23,5 +26,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/dashboard/:path*"],
+  matcher: ["/admin/dashboard/:path*", "/api/admin/:path*"],
 };
