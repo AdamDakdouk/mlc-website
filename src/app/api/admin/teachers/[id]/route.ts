@@ -13,21 +13,27 @@ const teacherFieldsSchema = z.object({
   experience: z.string().max(2000, "Experience is too long"),
 });
 
+// Note for callers: the size check below happens after the platform has
+// already fully buffered the uploaded file — Next.js 16's
+// proxyClientMaxBodySize silently truncates request bodies over its own
+// 10MB default rather than rejecting them, so this explicit check is still
+// necessary, not redundant. See
+// node_modules/next/dist/docs/01-app/03-api-reference/05-config/01-next-config-js/proxyClientMaxBodySize.md
 const MAX_REQUEST_SIZE = 10 * 1024 * 1024;
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_SIZE) {
+    return NextResponse.json({ error: "Request too large" }, { status: 413 });
+  }
+
   const { id } = await params;
 
   if (!mongoose.isValidObjectId(id)) {
     return NextResponse.json({ error: "Invalid teacher id" }, { status: 400 });
-  }
-
-  const contentLength = request.headers.get("content-length");
-  if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_SIZE) {
-    return NextResponse.json({ error: "Request too large" }, { status: 413 });
   }
 
   let formData: FormData;
