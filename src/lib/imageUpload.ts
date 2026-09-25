@@ -12,6 +12,13 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 const UPLOADS_ROOT = path.join(process.cwd(), "public", "uploads");
 
+const ALLOWED_FOLDERS = ["announcements", "teachers"] as const;
+type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
+
+function isValidFolder(value: string): value is UploadFolder {
+  return (ALLOWED_FOLDERS as readonly string[]).includes(value);
+}
+
 export class ImageValidationError extends Error {
   constructor(message: string) {
     super(message);
@@ -52,7 +59,7 @@ function detectImageType(buffer: Buffer): string | null {
 // upstream body-size limit. Validation here is magic-bytes-only (confirms
 // file format, not structural well-formedness) — do not feed the output
 // into an image-decoding/processing step without additional validation.
-export async function validateAndSaveImage(file: File, folder: string): Promise<string> {
+export async function validateAndSaveImage(file: File, folder: UploadFolder): Promise<string> {
   if (file.size > MAX_SIZE_BYTES) {
     throw new ImageValidationError("Image exceeds 5MB limit");
   }
@@ -75,13 +82,20 @@ export async function validateAndSaveImage(file: File, folder: string): Promise<
   return `/uploads/${folder}/${filename}`;
 }
 
+// Takes only the imageUrl, not an explicit folder: the folder is derived
+// from the URL itself so every call site doesn't have to independently
+// re-supply a folder name the URL already encodes. That redundancy is
+// exactly the kind of drift risk this shape avoids — e.g. a record saved
+// under "teachers" but deleted via a copy-pasted call that still says
+// "announcements". The derived folder is still validated against the same
+// allowlist `validateAndSaveImage` writes use.
 export async function deleteImageFile(imageUrl: string): Promise<void> {
   const filename = path.basename(imageUrl);
   if (!/^[0-9a-f-]{36}\.(jpg|png|webp)$/.test(filename)) {
     return;
   }
   const folder = path.basename(path.dirname(imageUrl));
-  if (!/^[a-z0-9]+$/.test(folder)) {
+  if (!isValidFolder(folder)) {
     return;
   }
   const filePath = path.join(UPLOADS_ROOT, folder, filename);

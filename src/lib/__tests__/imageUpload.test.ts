@@ -91,4 +91,10 @@ describe("imageUpload", () => {
       deleteImageFile("/../00000000-0000-0000-0000-000000000000.jpg"),
     ).resolves.not.toThrow();
   });
+
+  it("deleteImageFile no-ops when the folder isn't in the allowlist, even if it's a plausible hyphenated name", async () => {
+    await expect(
+      deleteImageFile("/uploads/meeting-requests/00000000-0000-0000-0000-000000000000.jpg"),
+    ).resolves.not.toThrow();
+  });
 });
