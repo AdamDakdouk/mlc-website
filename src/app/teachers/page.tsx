@@ -33,7 +33,7 @@ export default async function TeachersPage() {
                     className="rounded-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-navy/10 text-2xl text-navy">
+                  <div aria-hidden="true" className="flex h-24 w-24 items-center justify-center rounded-full bg-navy/10 text-2xl text-navy">
                     {t.name.slice(0, 1).toUpperCase()}
                   </div>
                 )}
