@@ -11,7 +11,8 @@ export async function proxy(request: NextRequest) {
   const payload = token ? await verifyToken(token) : null;
 
   if (!payload) {
-    if (request.nextUrl.pathname.startsWith("/api/")) {
+    if (request.nextUrl.pathname.startsWith("/api/admin/")) {
+      // API routes get a JSON 401, not an HTML redirect — callers expect JSON.
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     // request.url reflects whatever protocol/host Next believes it received.
