@@ -44,6 +44,9 @@ export default function TeacherForm({
     if (loading) return;
     setError(null);
 
+    // Keep this in sync with the min(1) subjects check in
+    // src/app/api/admin/teachers/route.ts and [id]/route.ts — this is just
+    // a fast-fail UX shortcut; the server is the source of truth.
     if (subjects.length === 0) {
       setError("Select at least one subject.");
       return;
