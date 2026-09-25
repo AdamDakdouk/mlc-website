@@ -78,7 +78,7 @@ export async function PUT(
 
   if (imageFile instanceof File && imageFile.size > 0) {
     try {
-      newImageUrl = await validateAndSaveImage(imageFile);
+      newImageUrl = await validateAndSaveImage(imageFile, "announcements");
     } catch (err) {
       if (err instanceof ImageValidationError) {
         return NextResponse.json({ error: err.message }, { status: 400 });

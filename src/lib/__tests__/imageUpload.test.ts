@@ -22,42 +22,52 @@ describe("imageUpload", () => {
     }
   });
 
-  it("saves a valid JPEG and returns its public URL", async () => {
+  it("saves a valid JPEG under the given folder and returns its public URL", async () => {
     const file = makeFile(JPEG_BYTES, "photo.jpg", "image/jpeg");
-    const url = await validateAndSaveImage(file);
+    const url = await validateAndSaveImage(file, "announcements");
     savedPaths.push(url);
     expect(url).toMatch(/^\/uploads\/announcements\/[a-f0-9-]+\.jpg$/);
   });
 
-  it("saves a valid PNG and returns its public URL", async () => {
+  it("saves a file under a different folder correctly", async () => {
     const file = makeFile(PNG_BYTES, "photo.png", "image/png");
-    const url = await validateAndSaveImage(file);
+    const url = await validateAndSaveImage(file, "teachers");
     savedPaths.push(url);
-    expect(url).toMatch(/^\/uploads\/announcements\/[a-f0-9-]+\.png$/);
+    expect(url).toMatch(/^\/uploads\/teachers\/[a-f0-9-]+\.png$/);
   });
 
   it("saves a valid WebP and returns its public URL", async () => {
     const file = makeFile(WEBP_BYTES, "photo.webp", "image/webp");
-    const url = await validateAndSaveImage(file);
+    const url = await validateAndSaveImage(file, "announcements");
     savedPaths.push(url);
     expect(url).toMatch(/^\/uploads\/announcements\/[a-f0-9-]+\.webp$/);
   });
 
   it("rejects a file whose content isn't a recognized image format, regardless of claimed type", async () => {
     const file = makeFile([0x00, 0x01, 0x02, 0x03], "fake.jpg", "image/jpeg");
-    await expect(validateAndSaveImage(file)).rejects.toThrow(ImageValidationError);
+    await expect(validateAndSaveImage(file, "announcements")).rejects.toThrow(ImageValidationError);
   });
 
   it("rejects a file over 5MB", async () => {
     const bigBytes = new Uint8Array(5 * 1024 * 1024 + 1);
     bigBytes.set(JPEG_BYTES);
     const file = new File([bigBytes], "big.jpg", { type: "image/jpeg" });
-    await expect(validateAndSaveImage(file)).rejects.toThrow(ImageValidationError);
+    await expect(validateAndSaveImage(file, "announcements")).rejects.toThrow(ImageValidationError);
   });
 
   it("deleteImageFile removes an existing file without error", async () => {
     const file = makeFile(JPEG_BYTES, "to-delete.jpg", "image/jpeg");
-    const url = await validateAndSaveImage(file);
+    const url = await validateAndSaveImage(file, "announcements");
+    const filePath = path.join(process.cwd(), "public", url);
+
+    await deleteImageFile(url);
+
+    await expect(access(filePath)).rejects.toThrow();
+  });
+
+  it("deleteImageFile correctly deletes a file from a non-default folder", async () => {
+    const file = makeFile(PNG_BYTES, "to-delete.png", "image/png");
+    const url = await validateAndSaveImage(file, "teachers");
     const filePath = path.join(process.cwd(), "public", url);
 
     await deleteImageFile(url);
@@ -71,13 +81,14 @@ describe("imageUpload", () => {
     ).resolves.not.toThrow();
   });
 
-  it("deleteImageFile no-ops on a path-traversal-style filename instead of unlinking", async () => {
-    await expect(deleteImageFile("..")).resolves.not.toThrow();
+  it("deleteImageFile no-ops on a malformed filename", async () => {
+    await expect(deleteImageFile("/uploads/announcements/not-a-uuid.jpg")).resolves.not.toThrow();
+    await expect(deleteImageFile("/uploads/announcements/..")).resolves.not.toThrow();
   });
 
-  it("deleteImageFile no-ops on a filename that isn't a UUID-plus-extension", async () => {
+  it("deleteImageFile no-ops when the folder segment isn't a plain safe name", async () => {
     await expect(
-      deleteImageFile("/uploads/announcements/not-a-uuid.jpg"),
+      deleteImageFile("/../00000000-0000-0000-0000-000000000000.jpg"),
     ).resolves.not.toThrow();
   });
 });

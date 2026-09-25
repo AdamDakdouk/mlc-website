@@ -67,6 +67,7 @@ describe("/api/admin/announcements/[id]", () => {
 
       const oldImageUrl = await validateAndSaveImage(
         new File([new Uint8Array(JPEG_BYTES)], "old.jpg", { type: "image/jpeg" }),
+        "announcements",
       );
       const existing = await Announcement.create({
         title: "Has image",
@@ -104,6 +105,7 @@ describe("/api/admin/announcements/[id]", () => {
 
       const imageUrl = await validateAndSaveImage(
         new File([new Uint8Array(JPEG_BYTES)], "photo.jpg", { type: "image/jpeg" }),
+        "announcements",
       );
       const existing = await Announcement.create({ title: "T", body: "B", imageUrl });
 
@@ -184,6 +186,7 @@ describe("/api/admin/announcements/[id]", () => {
 
       const imageUrl = await validateAndSaveImage(
         new File([new Uint8Array(JPEG_BYTES)], "photo.jpg", { type: "image/jpeg" }),
+        "announcements",
       );
       savedPaths.push(imageUrl);
       const existing = await Announcement.create({ title: "T", body: "B", imageUrl });
@@ -214,6 +217,7 @@ describe("/api/admin/announcements/[id]", () => {
 
       const oldImageUrl = await validateAndSaveImage(
         new File([new Uint8Array(JPEG_BYTES)], "old.jpg", { type: "image/jpeg" }),
+        "announcements",
       );
       savedPaths.push(oldImageUrl);
       const existing = await Announcement.create({ title: "T", body: "B", imageUrl: oldImageUrl });
@@ -276,6 +280,7 @@ describe("/api/admin/announcements/[id]", () => {
 
       const imageUrl = await validateAndSaveImage(
         new File([new Uint8Array(JPEG_BYTES)], "photo.jpg", { type: "image/jpeg" }),
+        "announcements",
       );
       const existing = await Announcement.create({ title: "T", body: "B", imageUrl });
 

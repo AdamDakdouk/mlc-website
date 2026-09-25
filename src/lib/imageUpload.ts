@@ -10,7 +10,7 @@ const ALLOWED_TYPES: Record<string, string> = {
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "announcements");
+const UPLOADS_ROOT = path.join(process.cwd(), "public", "uploads");
 
 export class ImageValidationError extends Error {
   constructor(message: string) {
@@ -52,7 +52,7 @@ function detectImageType(buffer: Buffer): string | null {
 // upstream body-size limit. Validation here is magic-bytes-only (confirms
 // file format, not structural well-formedness) — do not feed the output
 // into an image-decoding/processing step without additional validation.
-export async function validateAndSaveImage(file: File): Promise<string> {
+export async function validateAndSaveImage(file: File, folder: string): Promise<string> {
   if (file.size > MAX_SIZE_BYTES) {
     throw new ImageValidationError("Image exceeds 5MB limit");
   }
@@ -67,11 +67,12 @@ export async function validateAndSaveImage(file: File): Promise<string> {
 
   const ext = ALLOWED_TYPES[detectedType];
   const filename = `${randomUUID()}.${ext}`;
+  const uploadDir = path.join(UPLOADS_ROOT, folder);
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  await writeFile(path.join(UPLOAD_DIR, filename), buffer);
+  await mkdir(uploadDir, { recursive: true });
+  await writeFile(path.join(uploadDir, filename), buffer);
 
-  return `/uploads/announcements/${filename}`;
+  return `/uploads/${folder}/${filename}`;
 }
 
 export async function deleteImageFile(imageUrl: string): Promise<void> {
@@ -79,7 +80,11 @@ export async function deleteImageFile(imageUrl: string): Promise<void> {
   if (!/^[0-9a-f-]{36}\.(jpg|png|webp)$/.test(filename)) {
     return;
   }
-  const filePath = path.join(UPLOAD_DIR, filename);
+  const folder = path.basename(path.dirname(imageUrl));
+  if (!/^[a-z0-9]+$/.test(folder)) {
+    return;
+  }
+  const filePath = path.join(UPLOADS_ROOT, folder, filename);
   try {
     await unlink(filePath);
   } catch (err) {

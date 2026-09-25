@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
   const imageFile = formData.get("image");
   if (imageFile instanceof File && imageFile.size > 0) {
     try {
-      imageUrl = await validateAndSaveImage(imageFile);
+      imageUrl = await validateAndSaveImage(imageFile, "announcements");
     } catch (err) {
       if (err instanceof ImageValidationError) {
         return NextResponse.json({ error: err.message }, { status: 400 });
