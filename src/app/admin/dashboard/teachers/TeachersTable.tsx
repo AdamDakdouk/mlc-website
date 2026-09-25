@@ -43,6 +43,9 @@ function SortableRow({ row }: { row: TeacherRow }) {
   return (
     <tr ref={setNodeRef} style={style} className="border-b border-gray-100 bg-white">
       <td className="w-8 py-2 pr-2">
+        {/* This button intentionally has no onClick — dnd-kit's listeners
+            consume Enter/Space/arrow keys for keyboard reordering. Don't add
+            an onClick here without re-checking the interaction. */}
         <button
           type="button"
           {...attributes}
@@ -97,6 +100,7 @@ export default function TeachersTable({ initialRows }: { initialRows: TeacherRow
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
+    const previousRows = rows;
     const oldIndex = rows.findIndex((r) => r.id === active.id);
     const newIndex = rows.findIndex((r) => r.id === over.id);
     const reordered = [...rows];
@@ -113,13 +117,13 @@ export default function TeachersTable({ initialRows }: { initialRows: TeacherRow
       });
       if (!res.ok) {
         setError("Failed to save the new order.");
-        setRows(initialRows);
+        setRows(previousRows);
         return;
       }
       router.refresh();
     } catch {
       setError("Could not reach the server.");
-      setRows(initialRows);
+      setRows(previousRows);
     }
   }
 
