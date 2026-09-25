@@ -61,6 +61,11 @@ export async function POST(request: NextRequest) {
   }
 
   await connectToDatabase();
+  // Not atomic (separate read + create) — two concurrent creates could
+  // theoretically land on the same order value. Acceptable for a
+  // single-admin system where only one person is ever creating teachers
+  // at a time; worst case is a cosmetic tie in display order, not data
+  // loss or corruption.
   const highestOrderTeacher = await Teacher.findOne().sort({ order: -1 });
   const nextOrder = highestOrderTeacher ? highestOrderTeacher.order + 1 : 0;
 
@@ -75,6 +80,8 @@ export async function POST(request: NextRequest) {
       order: nextOrder,
     });
   } catch (err) {
+    // Avoid orphaning an already-saved photo file if the DB write fails
+    // after a successful upload.
     if (photoUrl) {
       await deleteImageFile(photoUrl);
     }
