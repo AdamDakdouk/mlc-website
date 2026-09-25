@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { connectToDatabase } from "@/lib/db";
 import { Teacher } from "@/models/Teacher";
-import DeleteTeacherButton from "./DeleteTeacherButton";
+import DeleteEntityButton from "@/components/admin/DeleteEntityButton";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +58,10 @@ export default async function TeachersAdminPage() {
                         className="rounded-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-navy/10 text-xs text-navy">
+                      <div
+                        aria-hidden="true"
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-navy/10 text-xs text-navy"
+                      >
                         {t.name.slice(0, 1).toUpperCase()}
                       </div>
                     )}
@@ -73,7 +76,11 @@ export default async function TeachersAdminPage() {
                     >
                       Edit
                     </Link>
-                    <DeleteTeacherButton id={t._id.toString()} name={t.name} />
+                    <DeleteEntityButton
+                      id={t._id.toString()}
+                      label={t.name}
+                      endpoint="/api/admin/teachers"
+                    />
                   </td>
                 </tr>
               ))}

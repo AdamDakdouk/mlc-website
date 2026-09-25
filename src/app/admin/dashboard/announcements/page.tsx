@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { connectToDatabase } from "@/lib/db";
 import { Announcement } from "@/models/Announcement";
-import DeleteAnnouncementButton from "./DeleteAnnouncementButton";
+import DeleteEntityButton from "@/components/admin/DeleteEntityButton";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +61,11 @@ export default async function AnnouncementsAdminPage() {
                     >
                       Edit
                     </Link>
-                    <DeleteAnnouncementButton id={a._id.toString()} title={a.title} />
+                    <DeleteEntityButton
+                      id={a._id.toString()}
+                      label={a.title}
+                      endpoint="/api/admin/announcements"
+                    />
                   </td>
                 </tr>
               ))}

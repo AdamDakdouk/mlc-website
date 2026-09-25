@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function DeleteAnnouncementButton({
+export default function DeleteEntityButton({
   id,
-  title,
+  label,
+  endpoint,
 }: {
   id: string;
-  title: string;
+  label: string;
+  endpoint: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -16,15 +18,15 @@ export default function DeleteAnnouncementButton({
 
   async function handleDelete() {
     if (loading) return;
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete "${label}"? This cannot be undone.`)) return;
 
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/announcements/${id}`, { method: "DELETE" });
+      const res = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "Failed to delete announcement.");
+        setError(data.error ?? "Failed to delete.");
         setLoading(false);
         return;
       }
@@ -40,7 +42,7 @@ export default function DeleteAnnouncementButton({
       <button
         onClick={handleDelete}
         disabled={loading}
-        aria-label={`Delete "${title}"`}
+        aria-label={`Delete "${label}"`}
         className="text-maroon hover:underline disabled:opacity-50"
       >
         {loading ? "Deleting..." : "Delete"}
