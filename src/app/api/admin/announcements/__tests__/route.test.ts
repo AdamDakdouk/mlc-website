@@ -1,7 +1,7 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import { NextRequest } from "next/server";
-import { unlink, readdir } from "fs/promises";
+import { unlink, access } from "fs/promises";
 import path from "path";
 
 const JPEG_BYTES = [0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46];
@@ -152,14 +152,22 @@ describe("POST /api/admin/announcements", () => {
     // `deleteImageFile`/`validateAndSaveImage` are re-exported through this
     // project's ESM-interop transform as getter-only properties on the
     // required module object, so `jest.spyOn` can't redefine them directly
-    // ("Cannot redefine property"). Rather than fight that, verify the
-    // outcome that actually matters: no file is left behind in the upload
-    // directory after a request that uploads an image but then fails to
-    // persist the announcement. `Announcement.create` itself is a normal
-    // writable static method on the (non-ESM-exported) mongoose Model
-    // object, so spying on it directly works fine.
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "announcements");
-    const before = await readdir(uploadDir).catch(() => [] as string[]);
+    // ("Cannot redefine property"). Instead, spy on the underlying
+    // `fs/promises` `writeFile` (a plain writable export of a Node core
+    // module, not subject to that interop restriction) to capture the exact
+    // path `validateAndSaveImage` wrote to, then assert specifically that
+    // that one file is gone afterward.
+    //
+    // We deliberately do NOT diff the whole upload directory's contents
+    // before/after (as an earlier version of this test did): Jest runs test
+    // files in parallel worker processes, and this directory is shared with
+    // other suites — e.g. the sibling `[id]/__tests__/route.test.ts` PUT
+    // tests — that also write real files into it concurrently. A
+    // before/after directory snapshot races against those unrelated writes
+    // and flakes; asserting against the one path this test's own upload
+    // produced does not.
+    const fsPromises = require("fs/promises");
+    const writeFileSpy = jest.spyOn(fsPromises, "writeFile");
 
     const createSpy = jest
       .spyOn(Announcement, "create")
@@ -176,13 +184,15 @@ describe("POST /api/admin/announcements", () => {
 
       await expect(POST(makeRequest(formData))).rejects.toThrow("simulated DB failure");
 
-      const after = await readdir(uploadDir).catch(() => [] as string[]);
-      expect(after.sort()).toEqual(before.sort());
+      expect(writeFileSpy).toHaveBeenCalledTimes(1);
+      const writtenPath = writeFileSpy.mock.calls[0][0] as string;
+      await expect(access(writtenPath)).rejects.toThrow();
 
       const count = await Announcement.countDocuments();
       expect(count).toBe(0);
     } finally {
       createSpy.mockRestore();
+      writeFileSpy.mockRestore();
     }
   });
 });
