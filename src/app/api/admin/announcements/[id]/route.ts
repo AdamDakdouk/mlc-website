@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { Announcement } from "@/models/Announcement";
@@ -42,6 +43,10 @@ export async function PUT(
   }
 
   const { id } = await params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return NextResponse.json({ error: "Invalid announcement id" }, { status: 400 });
+  }
 
   let formData: FormData;
   try {
@@ -116,6 +121,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return NextResponse.json({ error: "Invalid announcement id" }, { status: 400 });
+  }
 
   await connectToDatabase();
   const existing = await Announcement.findById(id);

@@ -138,6 +138,21 @@ describe("/api/admin/announcements/[id]", () => {
       expect(res.status).toBe(404);
     });
 
+    it("returns 400 for a malformed id", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+
+      const { PUT } = require("@/app/api/admin/announcements/[id]/route");
+      const formData = new FormData();
+      formData.set("title", "T");
+      formData.set("body", "B");
+
+      const res = await PUT(makeRequest("not-an-id", formData), {
+        params: Promise.resolve({ id: "not-an-id" }),
+      });
+      expect(res.status).toBe(400);
+    });
+
     it("rejects a request whose declared content-length exceeds the 10MB cap", async () => {
       const { connectToDatabase } = require("@/lib/db");
       await connectToDatabase();
@@ -287,6 +302,17 @@ describe("/api/admin/announcements/[id]", () => {
         params: Promise.resolve({ id: fakeId }),
       });
       expect(res.status).toBe(404);
+    });
+
+    it("returns 400 for a malformed id", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+
+      const { DELETE } = require("@/app/api/admin/announcements/[id]/route");
+      const res = await DELETE(makeRequest("not-an-id"), {
+        params: Promise.resolve({ id: "not-an-id" }),
+      });
+      expect(res.status).toBe(400);
     });
   });
 });
