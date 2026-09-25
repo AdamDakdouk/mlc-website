@@ -69,4 +69,31 @@ describe("PUT /api/admin/teachers/reorder", () => {
     const res = await PUT(makeRequest({ ids: ["not-an-id"] }));
     expect(res.status).toBe(400);
   });
+
+  it("rejects a list containing a duplicate id", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { Teacher } = require("@/models/Teacher");
+    const a = await Teacher.create({ name: "A", subjects: ["Math"], order: 0 });
+    const b = await Teacher.create({ name: "B", subjects: ["Math"], order: 1 });
+
+    const { PUT } = require("@/app/api/admin/teachers/reorder/route");
+    const res = await PUT(
+      makeRequest({ ids: [a._id.toString(), b._id.toString(), a._id.toString()] }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a list containing an id for a non-existent teacher", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const mongooseFresh = require("mongoose");
+    const { Teacher } = require("@/models/Teacher");
+    const a = await Teacher.create({ name: "A", subjects: ["Math"], order: 0 });
+    const missingId = new mongooseFresh.Types.ObjectId().toString();
+
+    const { PUT } = require("@/app/api/admin/teachers/reorder/route");
+    const res = await PUT(makeRequest({ ids: [a._id.toString(), missingId] }));
+    expect(res.status).toBe(400);
+  });
 });

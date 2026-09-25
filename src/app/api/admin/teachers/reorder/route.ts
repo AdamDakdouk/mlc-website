@@ -25,7 +25,17 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "One or more ids are invalid" }, { status: 400 });
   }
 
+  const uniqueIds = new Set(parsed.data.ids);
+  if (uniqueIds.size !== parsed.data.ids.length) {
+    return NextResponse.json({ error: "Duplicate ids are not allowed" }, { status: 400 });
+  }
+
   await connectToDatabase();
+
+  const matchedCount = await Teacher.countDocuments({ _id: { $in: parsed.data.ids } });
+  if (matchedCount !== parsed.data.ids.length) {
+    return NextResponse.json({ error: "One or more ids do not exist" }, { status: 400 });
+  }
 
   await Promise.all(
     parsed.data.ids.map((id, index) =>
