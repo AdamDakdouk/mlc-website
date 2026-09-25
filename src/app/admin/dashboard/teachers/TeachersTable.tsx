@@ -144,7 +144,21 @@ export default function TeachersTable({ initialRows }: { initialRows: TeacherRow
           console. SortableContext renders no DOM of its own, so it can
           stay scoped to just the rows.
         */}
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        {/*
+          dnd-kit auto-generates the aria-describedby id it needs for
+          accessibility announcements from a module-level counter when no
+          `id` is given. That counter isn't reset between the server render
+          and the client hydration pass, so the server and client end up
+          picking different numbers (e.g. "DndDescribedBy-0" vs
+          "DndDescribedBy-1") and React logs a hydration mismatch. Passing a
+          fixed id makes the generated aria id deterministic instead.
+        */}
+        <DndContext
+          id="teachers-reorder"
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-navy">
