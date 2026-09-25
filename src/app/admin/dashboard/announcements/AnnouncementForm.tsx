@@ -94,7 +94,7 @@ export default function AnnouncementForm({
       </div>
       <div>
         <label htmlFor="image" className="block text-sm font-medium text-navy">
-          Image {mode === "edit" && "(leave blank to keep current)"}
+          Image {mode === "edit" && !removeImage && "(leave blank to keep current)"}
         </label>
         {mode === "edit" && initialImageUrl && !removeImage && (
           <div className="mt-2 flex items-center gap-3">
@@ -114,13 +114,29 @@ export default function AnnouncementForm({
             </button>
           </div>
         )}
+        {mode === "edit" && removeImage && (
+          <p className="mt-2 text-sm text-maroon">
+            Image will be removed on save.{" "}
+            <button
+              type="button"
+              onClick={() => setRemoveImage(false)}
+              className="underline"
+            >
+              Undo
+            </button>
+          </p>
+        )}
         <input
           id="image"
           name="image"
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          aria-describedby="image-hint"
           className="mt-1 w-full text-sm"
         />
+        <p id="image-hint" className="mt-1 text-xs text-gray-500">
+          JPEG, PNG, or WebP, max 5MB
+        </p>
       </div>
       {error && (
         <p role="alert" className="text-sm text-maroon">

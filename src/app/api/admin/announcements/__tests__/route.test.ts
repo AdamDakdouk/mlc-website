@@ -107,6 +107,21 @@ describe("POST /api/admin/announcements", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects a title over 200 characters with a 400, not a 500", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { POST } = require("@/app/api/admin/announcements/route");
+
+    const formData = new FormData();
+    formData.set("title", "a".repeat(201));
+    formData.set("body", "Body for an overly long title.");
+
+    const res = await POST(makeRequest(formData));
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toBeTruthy();
+  });
+
   it("rejects an invalid image file", async () => {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();

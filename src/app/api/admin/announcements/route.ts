@@ -5,8 +5,8 @@ import { Announcement } from "@/models/Announcement";
 import { validateAndSaveImage, deleteImageFile, ImageValidationError } from "@/lib/imageUpload";
 
 const announcementFieldsSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  body: z.string().min(1, "Body is required"),
+  title: z.string().min(1, "Title is required").max(200, "Title is too long"),
+  body: z.string().min(1, "Body is required").max(5000, "Body is too long"),
 });
 
 // Headroom above imageUpload's 5MB image cap, to account for form field
