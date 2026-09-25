@@ -1,9 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { connectToDatabase } from "@/lib/db";
 import { Announcement } from "@/models/Announcement";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Announcements — MLC",
+  description: "Latest announcements and updates from Modernistic Learning Community.",
+};
 
 const PAGE_SIZE = 10;
 
@@ -13,11 +19,12 @@ export default async function AnnouncementsPage({
   searchParams: Promise<{ page?: string }>;
 }) {
   const { page: pageParam } = await searchParams;
-  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  const requestedPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
 
   await connectToDatabase();
   const total = await Announcement.countDocuments();
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
   const announcements = await Announcement.find()
     .sort({ createdAt: -1 })
     .skip((page - 1) * PAGE_SIZE)
@@ -27,7 +34,7 @@ export default async function AnnouncementsPage({
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <h1 className="mb-8 text-3xl font-semibold text-navy">Announcements</h1>
-      {announcements.length === 0 ? (
+      {total === 0 ? (
         <p className="text-gray-600">No announcements yet.</p>
       ) : (
         <div className="space-y-8">
@@ -36,7 +43,7 @@ export default async function AnnouncementsPage({
               {a.imageUrl && (
                 <Image
                   src={a.imageUrl}
-                  alt=""
+                  alt={a.title}
                   width={640}
                   height={360}
                   className="mb-4 w-full rounded object-cover"
