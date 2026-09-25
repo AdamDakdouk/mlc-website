@@ -14,10 +14,13 @@ const announcementSchema = new Schema<IAnnouncement>(
       type: String,
       required: true,
       trim: true,
+      maxlength: 200,
     },
     body: {
       type: String,
       required: true,
+      trim: true,
+      maxlength: 5000,
     },
     imageUrl: {
       type: String,

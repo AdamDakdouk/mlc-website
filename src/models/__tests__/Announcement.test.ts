@@ -53,4 +53,24 @@ describe("Announcement model", () => {
       Announcement.create({ title: "Title only" }),
     ).rejects.toThrow();
   });
+
+  it("rejects a title over 200 characters", async () => {
+    const { Announcement } = require("@/models/Announcement");
+    await expect(
+      Announcement.create({
+        title: "a".repeat(201),
+        body: "Body text",
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("rejects a body over 5000 characters", async () => {
+    const { Announcement } = require("@/models/Announcement");
+    await expect(
+      Announcement.create({
+        title: "Title",
+        body: "a".repeat(5001),
+      }),
+    ).rejects.toThrow();
+  });
 });
