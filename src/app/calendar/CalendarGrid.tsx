@@ -37,16 +37,24 @@ export default function CalendarGrid({ days }: { days: GridDay[] }) {
             >
               <span className="text-xs">{Number(day.date.slice(8, 10))}</span>
               <div className="mt-1 space-y-0.5">
-                {day.events.map((event) => (
-                  <button
-                    key={event.id}
-                    type="button"
-                    onClick={() => setSelected(event)}
-                    className={`block w-full truncate rounded px-1 py-0.5 text-left text-[10px] text-white ${CATEGORY_BG_CLASS[event.category as Category]}`}
-                  >
-                    {event.isStart ? event.title : " "}
-                  </button>
-                ))}
+                {day.events.map((event) =>
+                  event.isStart ? (
+                    <button
+                      key={event.id}
+                      type="button"
+                      onClick={() => setSelected(event)}
+                      className={`block w-full truncate rounded px-1 py-0.5 text-left text-[10px] text-white ${CATEGORY_BG_CLASS[event.category as Category]}`}
+                    >
+                      {event.title}
+                    </button>
+                  ) : (
+                    <div
+                      key={event.id}
+                      aria-hidden="true"
+                      className={`block h-4 w-full rounded ${CATEGORY_BG_CLASS[event.category as Category]}`}
+                    />
+                  ),
+                )}
               </div>
             </div>
           ))}
