@@ -90,6 +90,27 @@ describe("POST /api/admin/calendar", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects a startDate that isn't a real calendar date", async () => {
+    const { POST } = require("@/app/api/admin/calendar/route");
+    const res = await POST(
+      makeRequest({ title: "Bad Date", category: "Event", startDate: "2026-02-30" }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an endDate that isn't a real calendar date", async () => {
+    const { POST } = require("@/app/api/admin/calendar/route");
+    const res = await POST(
+      makeRequest({
+        title: "Bad End Date",
+        category: "Event",
+        startDate: "2026-04-01",
+        endDate: "2026-04-31",
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("rejects an endDate before startDate", async () => {
     const { POST } = require("@/app/api/admin/calendar/route");
     const res = await POST(

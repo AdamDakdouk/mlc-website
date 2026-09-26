@@ -3,6 +3,7 @@ import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { CalendarEvent } from "@/models/CalendarEvent";
 import { CATEGORIES } from "@/lib/calendarCategories";
+import { isRealCalendarDate } from "@/lib/calendarDate";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -37,6 +38,13 @@ export async function POST(request: NextRequest) {
       { error: "Please check the form fields and try again" },
       { status: 400 },
     );
+  }
+
+  if (!isRealCalendarDate(parsed.data.startDate)) {
+    return NextResponse.json({ error: "Invalid start date" }, { status: 400 });
+  }
+  if (parsed.data.endDate && !isRealCalendarDate(parsed.data.endDate)) {
+    return NextResponse.json({ error: "Invalid end date" }, { status: 400 });
   }
 
   const startDate = new Date(parsed.data.startDate);
