@@ -51,6 +51,7 @@ export default async function ApplicationsPage({
                 <div className="flex items-center gap-3 text-sm">
                   <a
                     href={`/api/admin/careers/applications/${a._id.toString()}/resume`}
+                    aria-label={`Download resume for "${a.name}"`}
                     className="text-navy hover:underline"
                   >
                     Download resume
@@ -62,7 +63,9 @@ export default async function ApplicationsPage({
                   />
                 </div>
               </div>
-              {a.coverNote && <p className="mt-3 text-sm text-gray-700">{a.coverNote}</p>}
+              {a.coverNote && (
+                <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700">{a.coverNote}</p>
+              )}
             </div>
           ))}
         </div>
