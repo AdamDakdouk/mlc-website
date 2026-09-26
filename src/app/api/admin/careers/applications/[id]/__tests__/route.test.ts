@@ -1,10 +1,12 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { NextRequest } from "next/server";
-import { readFile, rm } from "fs/promises";
+import { readFile } from "fs/promises";
 import path from "path";
+import { deleteResumeFile } from "@/lib/resumeUpload";
 
 describe("DELETE /api/admin/careers/applications/[id] and GET .../resume", () => {
   let mongod: MongoMemoryServer;
+  const createdResumeFilenames: string[] = [];
 
   beforeAll(async () => {
     mongod = await MongoMemoryServer.create();
@@ -21,7 +23,9 @@ describe("DELETE /api/admin/careers/applications/[id] and GET .../resume", () =>
   afterEach(async () => {
     const mongooseFresh = require("mongoose");
     await mongooseFresh.connection.dropDatabase();
-    await rm(path.join(process.cwd(), "uploads-private"), { recursive: true, force: true });
+    for (const filename of createdResumeFilenames.splice(0)) {
+      await deleteResumeFile(filename);
+    }
   });
 
   async function createApplicationWithResume() {
@@ -34,6 +38,7 @@ describe("DELETE /api/admin/careers/applications/[id] and GET .../resume", () =>
     const posting = await JobPosting.create({ title: "x", description: "x" });
     const pdfFile = new File([Buffer.from("%PDF-1.4\ntest")], "r.pdf", { type: "application/pdf" });
     const resumeFilename = await validateAndSaveResume(pdfFile);
+    createdResumeFilenames.push(resumeFilename);
     const application = await Application.create({
       postingId: posting._id,
       name: "Jane Doe",

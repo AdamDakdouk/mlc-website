@@ -1,5 +1,6 @@
-import { readFile as fsReadFile, rm } from "fs/promises";
+import { readFile as fsReadFile } from "fs/promises";
 import path from "path";
+import { deleteResumeFile } from "@/lib/resumeUpload";
 
 const PDF_BYTES = Buffer.from("%PDF-1.4\n%test resume content\n");
 const NOT_PDF_BYTES = Buffer.from("just some text, not a pdf");
@@ -7,8 +8,12 @@ const NOT_PDF_BYTES = Buffer.from("just some text, not a pdf");
 const PRIVATE_ROOT = path.join(process.cwd(), "uploads-private");
 
 describe("resumeUpload", () => {
+  const createdResumeFilenames: string[] = [];
+
   afterEach(async () => {
-    await rm(PRIVATE_ROOT, { recursive: true, force: true });
+    for (const filename of createdResumeFilenames.splice(0)) {
+      await deleteResumeFile(filename);
+    }
   });
 
   describe("validateAndSaveResume", () => {
@@ -17,6 +22,7 @@ describe("resumeUpload", () => {
       const file = new File([PDF_BYTES], "resume.pdf", { type: "application/pdf" });
 
       const filename = await validateAndSaveResume(file);
+      createdResumeFilenames.push(filename);
 
       expect(filename).toMatch(/^[0-9a-f-]{36}\.pdf$/);
       const saved = await fsReadFile(path.join(PRIVATE_ROOT, "resumes", filename));
@@ -44,6 +50,7 @@ describe("resumeUpload", () => {
       const { validateAndSaveResume, readResumeFile } = require("@/lib/resumeUpload");
       const file = new File([PDF_BYTES], "resume.pdf", { type: "application/pdf" });
       const filename = await validateAndSaveResume(file);
+      createdResumeFilenames.push(filename);
 
       const buffer = await readResumeFile(filename);
       expect(buffer.equals(PDF_BYTES)).toBe(true);
@@ -62,6 +69,7 @@ describe("resumeUpload", () => {
       const { validateAndSaveResume, deleteResumeFile, readResumeFile } = require("@/lib/resumeUpload");
       const file = new File([PDF_BYTES], "resume.pdf", { type: "application/pdf" });
       const filename = await validateAndSaveResume(file);
+      createdResumeFilenames.push(filename);
 
       await deleteResumeFile(filename);
 

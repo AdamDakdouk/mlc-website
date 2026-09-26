@@ -1,12 +1,12 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { NextRequest } from "next/server";
-import { rm } from "fs/promises";
-import path from "path";
+import { deleteResumeFile } from "@/lib/resumeUpload";
 
 const PDF_BYTES = Buffer.from("%PDF-1.4\ntest resume content");
 
 describe("POST /api/careers/[id]/apply", () => {
   let mongod: MongoMemoryServer;
+  const createdResumeFilenames: string[] = [];
 
   beforeAll(async () => {
     mongod = await MongoMemoryServer.create();
@@ -23,7 +23,9 @@ describe("POST /api/careers/[id]/apply", () => {
   afterEach(async () => {
     const mongooseFresh = require("mongoose");
     await mongooseFresh.connection.dropDatabase();
-    await rm(path.join(process.cwd(), "uploads-private"), { recursive: true, force: true });
+    for (const filename of createdResumeFilenames.splice(0)) {
+      await deleteResumeFile(filename);
+    }
   });
 
   async function createPosting(status: "Open" | "Closed" = "Open") {
@@ -66,6 +68,7 @@ describe("POST /api/careers/[id]/apply", () => {
     expect(applications).toHaveLength(1);
     expect(applications[0].name).toBe("Jane Doe");
     expect(applications[0].resumeFilename).toMatch(/^[0-9a-f-]{36}\.pdf$/);
+    createdResumeFilenames.push(applications[0].resumeFilename);
   });
 
   it("rejects an application to a closed posting", async () => {
@@ -177,6 +180,7 @@ describe("POST /api/careers/[id]/apply", () => {
     const { Application } = require("@/models/Application");
     const application = await Application.findOne({ postingId: posting._id });
     expect(application.coverNote).toBe("");
+    createdResumeFilenames.push(application.resumeFilename);
   });
 
   it("deletes the saved resume file when the DB write fails after upload", async () => {
@@ -202,6 +206,7 @@ describe("POST /api/careers/[id]/apply", () => {
     const resumeFilename = (createSpy.mock.calls[0][0] as { resumeFilename: string })
       .resumeFilename;
     expect(resumeFilename).toMatch(/^[0-9a-f-]{36}\.pdf$/);
+    createdResumeFilenames.push(resumeFilename);
 
     createSpy.mockRestore();
 
