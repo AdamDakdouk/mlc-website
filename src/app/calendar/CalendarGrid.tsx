@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { GridDay, GridEvent } from "./monthUtils";
-import { CATEGORY_BG_CLASS, type Category } from "@/lib/calendarCategories";
+import { CATEGORY_BG_CLASS, CATEGORY_TEXT_CLASS, type Category } from "@/lib/calendarCategories";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -43,7 +43,7 @@ export default function CalendarGrid({ days }: { days: GridDay[] }) {
                       key={event.id}
                       type="button"
                       onClick={() => setSelected(event)}
-                      className={`block w-full truncate rounded px-1 py-0.5 text-left text-[10px] text-white ${CATEGORY_BG_CLASS[event.category as Category]}`}
+                      className={`block w-full truncate rounded px-1 py-0.5 text-left text-[10px] ${CATEGORY_TEXT_CLASS[event.category as Category]} ${CATEGORY_BG_CLASS[event.category as Category]}`}
                     >
                       {event.title}
                     </button>
@@ -69,7 +69,7 @@ export default function CalendarGrid({ days }: { days: GridDay[] }) {
             <button
               type="button"
               onClick={() => setSelected(event)}
-              className={`block w-full rounded px-3 py-2 text-left text-sm text-white ${CATEGORY_BG_CLASS[event.category as Category]}`}
+              className={`block w-full rounded px-3 py-2 text-left text-sm ${CATEGORY_TEXT_CLASS[event.category as Category]} ${CATEGORY_BG_CLASS[event.category as Category]}`}
             >
               <span className="font-medium">{event.title}</span>
               <span className="ml-2 text-xs opacity-90">

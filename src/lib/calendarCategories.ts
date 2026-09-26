@@ -7,3 +7,9 @@ export const CATEGORY_BG_CLASS: Record<Category, string> = {
   Holiday: "bg-maroon",
   Event: "bg-gold",
 };
+
+export const CATEGORY_TEXT_CLASS: Record<Category, string> = {
+  Academic: "text-white",
+  Holiday: "text-white",
+  Event: "text-navy",
+};
