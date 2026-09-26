@@ -36,6 +36,7 @@ yarn-error.log*
 
 # user-uploaded content (local filesystem storage for dev; not source)
 /public/uploads/
+/uploads-private/
 
 # vercel
 .vercel
