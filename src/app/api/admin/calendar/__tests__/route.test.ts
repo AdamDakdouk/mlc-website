@@ -98,6 +98,14 @@ describe("POST /api/admin/calendar", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects a startDate with an out-of-range month instead of crashing", async () => {
+    const { POST } = require("@/app/api/admin/calendar/route");
+    const res = await POST(
+      makeRequest({ title: "Bad Month", category: "Event", startDate: "2026-13-01" }),
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("rejects an endDate that isn't a real calendar date", async () => {
     const { POST } = require("@/app/api/admin/calendar/route");
     const res = await POST(
