@@ -27,6 +27,15 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // This check is a sanity guard, not a real ceiling: a request with no
+  // Content-Length header (or chunked transfer-encoding) skips it entirely,
+  // and request.formData() will still fully buffer the body into memory
+  // before any downstream validation runs. This is the same accepted
+  // tradeoff documented in src/lib/imageUpload.ts's validateAndSaveImage —
+  // real enforcement needs a reverse-proxy/hosting-level body-size limit,
+  // deferred until a hosting target is chosen (see project notes). This is
+  // more consequential here than elsewhere since this is the app's only
+  // unauthenticated write endpoint.
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_SIZE) {
     return NextResponse.json({ error: "Request too large" }, { status: 413 });

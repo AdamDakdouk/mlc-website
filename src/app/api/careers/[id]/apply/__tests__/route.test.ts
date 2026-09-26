@@ -178,4 +178,36 @@ describe("POST /api/careers/[id]/apply", () => {
     const application = await Application.findOne({ postingId: posting._id });
     expect(application.coverNote).toBe("");
   });
+
+  it("deletes the saved resume file when the DB write fails after upload", async () => {
+    const posting = await createPosting();
+    const { POST } = require("@/app/api/careers/[id]/apply/route");
+    const { Application } = require("@/models/Application");
+    const { readResumeFile } = require("@/lib/resumeUpload");
+
+    // Force the save-then-cleanup rollback path: the resume is genuinely
+    // written to disk first (validateAndSaveResume is not mocked), and only
+    // the DB write is forced to fail, mirroring a real create() error.
+    const createSpy = jest
+      .spyOn(Application, "create")
+      .mockRejectedValueOnce(new Error("simulated DB failure"));
+
+    await expect(
+      POST(makeRequest(posting._id.toString(), makeFormData()), {
+        params: Promise.resolve({ id: posting._id.toString() }),
+      }),
+    ).rejects.toThrow("simulated DB failure");
+
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    const resumeFilename = (createSpy.mock.calls[0][0] as { resumeFilename: string })
+      .resumeFilename;
+    expect(resumeFilename).toMatch(/^[0-9a-f-]{36}\.pdf$/);
+
+    createSpy.mockRestore();
+
+    expect(await Application.countDocuments({})).toBe(0);
+    // The file that was written before the failed create() must have been
+    // removed by the rollback — reading it back should fail.
+    await expect(readResumeFile(resumeFilename)).rejects.toThrow();
+  });
 });
