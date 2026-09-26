@@ -79,8 +79,20 @@ export async function DELETE(
   // UI path to ever clean it up. This is why postings normally get closed
   // rather than deleted — delete is for correcting a mistake.
   const applications = await Application.find({ postingId: id });
+  // Sequential (not Promise.all) is deliberate: it bounds how many files get
+  // deleted before a failure, and a retry is safe since deleteResumeFile is
+  // idempotent for already-removed files (ENOENT is swallowed). If this
+  // throws, the posting/applications are left intact so the admin can retry.
   for (const application of applications) {
-    await deleteResumeFile(application.resumeFilename);
+    try {
+      await deleteResumeFile(application.resumeFilename);
+    } catch (err) {
+      console.error(
+        `Failed to delete resume file "${application.resumeFilename}" for application ${application._id.toString()}:`,
+        err,
+      );
+      throw err;
+    }
   }
   await Application.deleteMany({ postingId: id });
   await JobPosting.deleteOne({ _id: id });
