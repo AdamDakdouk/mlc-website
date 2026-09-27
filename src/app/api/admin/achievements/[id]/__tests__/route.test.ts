@@ -141,6 +141,54 @@ describe("PUT/DELETE /api/admin/achievements/[id]", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects a request whose declared content-length exceeds the 10MB cap", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+
+    const { PUT } = require("@/app/api/admin/achievements/[id]/route");
+
+    // We only need the declared Content-Length to exceed the cap, not an
+    // actual 10MB+ body — the route must reject based on the header alone,
+    // before ever calling request.formData(). Keeping the body tiny (or
+    // absent) keeps this test fast. The id doesn't need to correspond to a
+    // real achievement since the request is rejected before the record is
+    // ever looked up.
+    const oversized = 10 * 1024 * 1024 + 1;
+    const mongooseFresh = require("mongoose");
+    const fakeId = new mongooseFresh.Types.ObjectId().toString();
+    const request = new NextRequest(`http://localhost/api/admin/achievements/${fakeId}`, {
+      method: "PUT",
+      headers: { "content-length": String(oversized) },
+    });
+
+    const res = await PUT(request, { params: Promise.resolve({ id: fakeId }) });
+    expect(res.status).toBe(413);
+  });
+
+  it("rejects a missing title and leaves the existing photo untouched", async () => {
+    const achievement = await createAchievement(true);
+    const photoUrl = achievement.photoUrl;
+    const { PUT } = require("@/app/api/admin/achievements/[id]/route");
+
+    const formData = new FormData();
+    formData.set("title", "");
+    formData.set("description", achievement.description);
+    formData.set("date", "2026-03-10");
+
+    const res = await PUT(makeRequest("PUT", achievement._id.toString(), formData), {
+      params: Promise.resolve({ id: achievement._id.toString() }),
+    });
+    expect(res.status).toBe(400);
+
+    const { Achievement } = require("@/models/Achievement");
+    const unchanged = await Achievement.findById(achievement._id);
+    expect(unchanged.title).toBe(achievement.title);
+    expect(unchanged.photoUrl).toBe(photoUrl);
+
+    const filePath = path.join(process.cwd(), "public", photoUrl);
+    await expect(readFile(filePath)).resolves.toBeDefined();
+  });
+
   it("returns 400 for a malformed id on PUT", async () => {
     const { PUT } = require("@/app/api/admin/achievements/[id]/route");
     const formData = new FormData();
