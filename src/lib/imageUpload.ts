@@ -12,7 +12,7 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 const UPLOADS_ROOT = path.join(process.cwd(), "public", "uploads");
 
-const ALLOWED_FOLDERS = ["announcements", "teachers"] as const;
+const ALLOWED_FOLDERS = ["announcements", "teachers", "achievements"] as const;
 type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
 
 function isValidFolder(value: string): value is UploadFolder {
