@@ -34,7 +34,7 @@ describe("MeetingRequest model", () => {
       studentName: "Sam Doe",
       studentGrade: "Grade 5",
       teacherId,
-      location: "Room 204",
+      parentAddress: "123 Main St, Bchamoun",
       requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
     });
 
@@ -56,7 +56,7 @@ describe("MeetingRequest model", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: new mongoose.Types.ObjectId(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
       }),
     ).rejects.toThrow();
@@ -74,7 +74,7 @@ describe("MeetingRequest model", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: new mongoose.Types.ObjectId(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
       }),
     ).rejects.toThrow();
@@ -92,7 +92,7 @@ describe("MeetingRequest model", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: new mongoose.Types.ObjectId(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
       }),
     ).rejects.toThrow();
@@ -110,7 +110,7 @@ describe("MeetingRequest model", () => {
         parentPhone: "123",
         studentGrade: "Grade 5",
         teacherId: new mongoose.Types.ObjectId(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
       }),
     ).rejects.toThrow();
@@ -128,7 +128,7 @@ describe("MeetingRequest model", () => {
         parentPhone: "123",
         studentName: "Sam Doe",
         teacherId: new mongoose.Types.ObjectId(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
       }),
     ).rejects.toThrow();
@@ -146,7 +146,7 @@ describe("MeetingRequest model", () => {
         parentPhone: "123",
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
       }),
     ).rejects.toThrow();
@@ -165,7 +165,7 @@ describe("MeetingRequest model", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: new mongoose.Types.ObjectId(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
       }),
     ).rejects.toThrow();
   });
@@ -183,14 +183,14 @@ describe("MeetingRequest model", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: new mongoose.Types.ObjectId(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
         status: "Maybe",
       }),
     ).rejects.toThrow();
   });
 
-  it("rejects a missing location", async () => {
+  it("rejects a missing parentAddress", async () => {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();
     const { MeetingRequest } = require("@/models/MeetingRequest");

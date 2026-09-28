@@ -7,10 +7,10 @@ export interface IMeetingRequest extends Document {
   parentName: string;
   parentEmail: string;
   parentPhone: string;
+  parentAddress: string;
   studentName: string;
   studentGrade: string;
   teacherId: Types.ObjectId;
-  location: string;
   reason: string;
   requestedDateTime: Date;
   confirmedDateTime: Date | null;
@@ -39,6 +39,12 @@ const meetingRequestSchema = new Schema<IMeetingRequest>(
       trim: true,
       maxlength: 30,
     },
+    parentAddress: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 200,
+    },
     studentName: {
       type: String,
       required: true,
@@ -55,12 +61,6 @@ const meetingRequestSchema = new Schema<IMeetingRequest>(
       type: Schema.Types.ObjectId,
       ref: "Teacher",
       required: true,
-    },
-    location: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 200,
     },
     reason: {
       type: String,

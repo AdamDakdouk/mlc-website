@@ -46,7 +46,7 @@ describe("POST /api/meeting-requests/book", () => {
       studentName: "Sam Doe",
       studentGrade: "Grade 5",
       teacherId: teacher._id.toString(),
-      location: "Room 204",
+      parentAddress: "123 Main St, Bchamoun",
       requestedDateTime: "2026-10-15T10:00",
       reason: "Discuss progress in Math.",
     };
@@ -61,7 +61,7 @@ describe("POST /api/meeting-requests/book", () => {
     expect(saved.parentName).toBe("Jane Doe");
     expect(saved.studentGrade).toBe("Grade 5");
     expect(saved.teacherId.toString()).toBe(teacher._id.toString());
-    expect(saved.location).toBe("Room 204");
+    expect(saved.parentAddress).toBe("123 Main St, Bchamoun");
     expect(saved.reason).toBe("Discuss progress in Math.");
     expect(saved.status).toBe("Pending");
   });
@@ -78,7 +78,7 @@ describe("POST /api/meeting-requests/book", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: teacher._id.toString(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: "2026-10-15T10:00",
       }),
     );
@@ -117,7 +117,7 @@ describe("POST /api/meeting-requests/book", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: teacher._id.toString(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: "2026-10-15T10:00",
       }),
     );
@@ -135,7 +135,7 @@ describe("POST /api/meeting-requests/book", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: teacher._id.toString(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: "2026-10-15",
       }),
     );
@@ -153,7 +153,7 @@ describe("POST /api/meeting-requests/book", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: teacher._id.toString(),
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: "2026-02-30T10:00",
       }),
     );
@@ -170,7 +170,7 @@ describe("POST /api/meeting-requests/book", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: "not-an-id",
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: "2026-10-15T10:00",
       }),
     );
@@ -190,14 +190,14 @@ describe("POST /api/meeting-requests/book", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: missingId,
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: "2026-10-15T10:00",
       }),
     );
     expect(res.status).toBe(404);
   });
 
-  it("rejects a missing location", async () => {
+  it("rejects a missing parentAddress", async () => {
     const teacher = await createTeacher();
     const { POST } = require("@/app/api/meeting-requests/book/route");
     const res = await POST(
@@ -223,7 +223,7 @@ describe("POST /api/meeting-requests/book", () => {
       studentName: "Sam Doe",
       studentGrade: "Grade 5",
       teacherId: teacher._id.toString(),
-      location: "Room 204",
+      parentAddress: "123 Main St, Bchamoun",
       requestedDateTime: "2026-10-15T10:00",
     };
     const { POST } = require("@/app/api/meeting-requests/book/route");

@@ -251,7 +251,7 @@ describe("/api/admin/teachers/[id]", () => {
         studentName: "Sam Doe",
         studentGrade: "Grade 5",
         teacherId: existing._id,
-        location: "Room 204",
+        parentAddress: "123 Main St, Bchamoun",
         requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
       });
 

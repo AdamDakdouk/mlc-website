@@ -14,10 +14,10 @@ const meetingRequestFieldsSchema = z.object({
     .max(254, "Email is too long")
     .email("Invalid email address"),
   parentPhone: z.string().min(1, "Phone is required").max(30, "Phone is too long"),
+  parentAddress: z.string().min(1, "Address is required").max(200, "Address is too long"),
   studentName: z.string().min(1, "Student name is required").max(200, "Student name is too long"),
   studentGrade: z.string().min(1, "Grade is required").max(50, "Grade is too long"),
   teacherId: z.string().min(1, "Teacher is required"),
-  location: z.string().min(1, "Location is required").max(200, "Location is too long"),
   requestedDateTime: z.string().regex(DATETIME_RE, "Invalid date/time"),
   reason: z.string().max(2000, "Reason is too long").optional(),
 });
@@ -72,10 +72,10 @@ export async function POST(request: NextRequest) {
     parentName: parsed.data.parentName,
     parentEmail: parsed.data.parentEmail,
     parentPhone: parsed.data.parentPhone,
+    parentAddress: parsed.data.parentAddress,
     studentName: parsed.data.studentName,
     studentGrade: parsed.data.studentGrade,
     teacherId: parsed.data.teacherId,
-    location: parsed.data.location,
     reason: parsed.data.reason ?? "",
     requestedDateTime,
   });

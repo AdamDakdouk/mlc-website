@@ -44,6 +44,10 @@ export default async function MeetingRequestDetailPage({
           <dd className="text-gray-700">{meetingRequest.parentPhone}</dd>
         </div>
         <div>
+          <dt className="font-medium text-navy">Address</dt>
+          <dd className="text-gray-700">{meetingRequest.parentAddress}</dd>
+        </div>
+        <div>
           <dt className="font-medium text-navy">Student</dt>
           <dd className="text-gray-700">
             {meetingRequest.studentName} ({meetingRequest.studentGrade})
@@ -52,10 +56,6 @@ export default async function MeetingRequestDetailPage({
         <div>
           <dt className="font-medium text-navy">Teacher</dt>
           <dd className="text-gray-700">{teacher?.name ?? "—"}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-navy">Location</dt>
-          <dd className="text-gray-700">{meetingRequest.location}</dd>
         </div>
         <div>
           <dt className="font-medium text-navy">Requested</dt>
