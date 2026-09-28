@@ -60,7 +60,8 @@ describe("POST /api/tours/book", () => {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();
     const { POST } = require("@/app/api/tours/book/route");
-    const { notes, ...bodyWithoutNotes } = validBody;
+    const bodyWithoutNotes: Record<string, unknown> = { ...validBody };
+    delete bodyWithoutNotes.notes;
 
     const res = await POST(makeRequest(bodyWithoutNotes));
     expect(res.status).toBe(201);
@@ -73,7 +74,8 @@ describe("POST /api/tours/book", () => {
 
   it("rejects a missing name", async () => {
     const { POST } = require("@/app/api/tours/book/route");
-    const { name, ...body } = validBody;
+    const body: Record<string, unknown> = { ...validBody };
+    delete body.name;
     const res = await POST(makeRequest(body));
     expect(res.status).toBe(400);
   });
