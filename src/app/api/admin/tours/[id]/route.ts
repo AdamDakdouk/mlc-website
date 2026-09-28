@@ -3,10 +3,8 @@ import mongoose from "mongoose";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { TourBooking } from "@/models/TourBooking";
-import { isRealDateTime } from "@/lib/dateTime";
+import { isRealDateTime, DATETIME_RE } from "@/lib/dateTime";
 import { type TourBookingStatus } from "@/lib/tourBookingStatuses";
-
-const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
 // TourBooking.status is created as "Pending" by the public booking route
 // and only ever transitions away from it here — admin can move a booking

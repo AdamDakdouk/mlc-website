@@ -1,4 +1,4 @@
-const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+export const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
 export function isRealDateTime(value: string): boolean {
   if (!DATETIME_RE.test(value)) {

@@ -76,6 +76,35 @@ describe("PUT/DELETE /api/admin/tours/[id]", () => {
     expect(updated.confirmedDateTime.toISOString()).toBe(booking.requestedDateTime.toISOString());
   });
 
+  it("preserves a previously-confirmed time across a decline-then-reconfirm cycle", async () => {
+    const booking = await createBooking();
+    const { PUT } = require("@/app/api/admin/tours/[id]/route");
+    const { TourBooking } = require("@/models/TourBooking");
+
+    await PUT(
+      makeRequest("PUT", booking._id.toString(), {
+        status: "Confirmed",
+        confirmedDateTime: "2026-10-20T09:00",
+      }),
+      { params: Promise.resolve({ id: booking._id.toString() }) },
+    );
+
+    await PUT(
+      makeRequest("PUT", booking._id.toString(), { status: "Declined" }),
+      { params: Promise.resolve({ id: booking._id.toString() }) },
+    );
+
+    const res = await PUT(
+      makeRequest("PUT", booking._id.toString(), { status: "Confirmed" }),
+      { params: Promise.resolve({ id: booking._id.toString() }) },
+    );
+    expect(res.status).toBe(200);
+
+    const updated = await TourBooking.findById(booking._id);
+    expect(updated.status).toBe("Confirmed");
+    expect(updated.confirmedDateTime.toISOString()).toContain("2026-10-20T09:00");
+  });
+
   it("declines a booking without touching confirmedDateTime", async () => {
     const booking = await createBooking();
     const { PUT } = require("@/app/api/admin/tours/[id]/route");

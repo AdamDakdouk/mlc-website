@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { TourBooking } from "@/models/TourBooking";
-import { isRealDateTime } from "@/lib/dateTime";
-
-const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+import { isRealDateTime, DATETIME_RE } from "@/lib/dateTime";
 
 const bookingFieldsSchema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Name is too long"),
