@@ -60,6 +60,40 @@ describe("MeetingRequest model", () => {
     ).rejects.toThrow();
   });
 
+  it("rejects a missing parentEmail", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { MeetingRequest } = require("@/models/MeetingRequest");
+
+    await expect(
+      MeetingRequest.create({
+        parentName: "Jane Doe",
+        parentPhone: "123",
+        studentName: "Sam Doe",
+        studentGrade: "Grade 5",
+        teacherId: new mongoose.Types.ObjectId(),
+        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("rejects a missing parentPhone", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { MeetingRequest } = require("@/models/MeetingRequest");
+
+    await expect(
+      MeetingRequest.create({
+        parentName: "Jane Doe",
+        parentEmail: "jane@example.com",
+        studentName: "Sam Doe",
+        studentGrade: "Grade 5",
+        teacherId: new mongoose.Types.ObjectId(),
+        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
+      }),
+    ).rejects.toThrow();
+  });
+
   it("rejects a missing studentName", async () => {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();
