@@ -12,7 +12,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/calendar",
     "/careers",
     "/achievements",
-    "/tours",
     "/meeting-requests",
     "/about",
     "/contact",

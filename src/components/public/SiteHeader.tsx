@@ -12,7 +12,6 @@ const NAV_LINKS = [
   { href: "/calendar", label: "Academic Calendar" },
   { href: "/careers", label: "Careers" },
   { href: "/achievements", label: "Achievements" },
-  { href: "/tours", label: "Book a Tour" },
   { href: "/meeting-requests", label: "Request a Meeting" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },

@@ -8,7 +8,6 @@ const NAV_ITEMS = [
   { href: "/admin/dashboard/teachers", label: "Teachers" },
   { href: "/admin/dashboard/calendar", label: "Academic Calendar" },
   { href: "/admin/dashboard/careers", label: "Careers" },
-  { href: "/admin/dashboard/bookings", label: "Bookings" },
   { href: "/admin/dashboard/achievements", label: "Achievements" },
   { href: "/admin/dashboard/meeting-requests", label: "Meeting Requests" },
 ];

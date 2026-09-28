@@ -27,8 +27,7 @@ const meetingRequestFieldsSchema = z.object({
 // skips this check entirely, and request.json() will still fully buffer
 // the body into memory before any downstream validation runs. Real
 // enforcement needs a reverse-proxy/hosting-level body-size limit,
-// deferred until a hosting target is chosen (see project notes). Same
-// accepted tradeoff as src/app/api/tours/book/route.ts.
+// deferred until a hosting target is chosen (see project notes).
 const MAX_REQUEST_SIZE = 100 * 1024;
 
 export async function POST(request: NextRequest) {

@@ -38,14 +38,8 @@ export default async function HomePage() {
         </p>
         <div className="mt-6 flex gap-4">
           <Link
-            href="/tours"
-            className="rounded bg-navy px-5 py-2.5 font-medium text-white transition hover:bg-navy/90"
-          >
-            Book a Tour
-          </Link>
-          <Link
             href="/about"
-            className="rounded border border-navy px-5 py-2.5 font-medium text-navy transition hover:bg-navy/5"
+            className="rounded bg-navy px-5 py-2.5 font-medium text-white transition hover:bg-navy/90"
           >
             About Us
           </Link>
