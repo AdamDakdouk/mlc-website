@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose";
+import { TOUR_BOOKING_STATUSES, type TourBookingStatus } from "@/lib/tourBookingStatuses";
 
-export type TourBookingStatus = "Pending" | "Confirmed" | "Declined";
+export type { TourBookingStatus };
 
 export interface ITourBooking extends Document {
   name: string;
@@ -58,7 +59,7 @@ const tourBookingSchema = new Schema<ITourBooking>(
     status: {
       type: String,
       required: true,
-      enum: ["Pending", "Confirmed", "Declined"],
+      enum: [...TOUR_BOOKING_STATUSES],
       default: "Pending",
     },
   },
