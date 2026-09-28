@@ -44,7 +44,7 @@ export default function FileInput({ id, name, accept, hint }: FileInputProps) {
             type="button"
             onClick={handleClear}
             aria-label={`Remove selected file "${fileName}"`}
-            className="ml-2 shrink-0 rounded text-gray-400 transition hover:text-maroon"
+            className="ml-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xl leading-none text-gray-500 transition hover:bg-maroon/10 hover:text-maroon"
           >
             ×
           </button>
