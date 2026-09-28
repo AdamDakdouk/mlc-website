@@ -63,8 +63,8 @@ export default function SiteHeader() {
           <Image
             src="/images/logo.jpg"
             alt="MLC logo"
-            width={40}
-            height={40}
+            width={56}
+            height={56}
             className="rounded-full"
           />
           <span className="text-lg font-semibold text-navy">MLC</span>

@@ -25,8 +25,8 @@ export default async function HomePage() {
         <Image
           src="/images/logo.jpg"
           alt="MLC logo"
-          width={96}
-          height={96}
+          width={140}
+          height={140}
           className="rounded-full"
           priority
         />
