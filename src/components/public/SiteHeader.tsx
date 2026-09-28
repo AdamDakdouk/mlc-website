@@ -37,6 +37,7 @@ export default function SiteHeader() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setMenuOpen(false);
+        toggleRef.current?.focus();
       }
     }
 
