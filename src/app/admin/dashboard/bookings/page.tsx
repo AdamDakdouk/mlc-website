@@ -13,7 +13,7 @@ const STATUS_BADGE_CLASS: Record<TourBookingStatus, string> = {
 
 export default async function BookingsAdminPage() {
   await connectToDatabase();
-  const bookings = await TourBooking.find().sort({ submittedAt: -1 }).lean();
+  const bookings = await TourBooking.find().sort({ createdAt: -1 }).lean();
 
   return (
     <div>
