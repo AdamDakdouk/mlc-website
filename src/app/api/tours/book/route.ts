@@ -24,11 +24,14 @@ const bookingFieldsSchema = z.object({
 });
 
 // No file upload in this module, so a legitimate body is a few hundred
-// bytes — this cap is a sanity guard against abuse, not a real ceiling
-// (see src/app/api/careers/[id]/apply/route.ts for the fuller caveat about
-// why a Content-Length-based check like this can be bypassed entirely by
-// omitting the header or using chunked transfer-encoding — the same
-// accepted tradeoff applies here).
+// bytes — this cap is a sanity guard against abuse, not a real ceiling: a
+// request with no Content-Length header (or chunked transfer-encoding)
+// skips this check entirely, and request.json() will still fully buffer
+// the body into memory before any downstream validation runs. Real
+// enforcement needs a reverse-proxy/hosting-level body-size limit,
+// deferred until a hosting target is chosen (see project notes). Same
+// accepted tradeoff as src/app/api/careers/[id]/apply/route.ts, which is
+// more consequential there since it's the only endpoint accepting a file.
 const MAX_REQUEST_SIZE = 100 * 1024;
 
 export async function POST(request: NextRequest) {
