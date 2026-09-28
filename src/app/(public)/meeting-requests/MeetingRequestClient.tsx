@@ -60,6 +60,7 @@ export default function MeetingRequestClient({ teachers }: MeetingRequestClientP
       parentPhone: formData.get("parentPhone"),
       studentName: formData.get("studentName"),
       studentGrade: formData.get("studentGrade"),
+      location: formData.get("location"),
       requestedDateTime: formData.get("requestedDateTime"),
       reason: formData.get("reason") ?? "",
     };
@@ -205,6 +206,19 @@ export default function MeetingRequestClient({ teachers }: MeetingRequestClientP
             type="text"
             required
             placeholder="e.g. Grade 5"
+            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-navy focus:outline-none"
+          />
+        </div>
+        <div>
+          <label htmlFor="location" className="block text-sm font-medium text-navy">
+            Location
+          </label>
+          <input
+            id="location"
+            name="location"
+            type="text"
+            required
+            placeholder="e.g. Room 204, Main Office, Online (Zoom)"
             className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-navy focus:outline-none"
           />
         </div>

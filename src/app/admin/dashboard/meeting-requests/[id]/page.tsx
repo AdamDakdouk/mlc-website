@@ -54,6 +54,10 @@ export default async function MeetingRequestDetailPage({
           <dd className="text-gray-700">{teacher?.name ?? "—"}</dd>
         </div>
         <div>
+          <dt className="font-medium text-navy">Location</dt>
+          <dd className="text-gray-700">{meetingRequest.location}</dd>
+        </div>
+        <div>
           <dt className="font-medium text-navy">Requested</dt>
           <dd className="text-gray-700">
             {meetingRequest.requestedDateTime.toLocaleString(undefined, { timeZone: "UTC" })}

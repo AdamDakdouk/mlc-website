@@ -17,6 +17,7 @@ const meetingRequestFieldsSchema = z.object({
   studentName: z.string().min(1, "Student name is required").max(200, "Student name is too long"),
   studentGrade: z.string().min(1, "Grade is required").max(50, "Grade is too long"),
   teacherId: z.string().min(1, "Teacher is required"),
+  location: z.string().min(1, "Location is required").max(200, "Location is too long"),
   requestedDateTime: z.string().regex(DATETIME_RE, "Invalid date/time"),
   reason: z.string().max(2000, "Reason is too long").optional(),
 });
@@ -74,6 +75,7 @@ export async function POST(request: NextRequest) {
     studentName: parsed.data.studentName,
     studentGrade: parsed.data.studentGrade,
     teacherId: parsed.data.teacherId,
+    location: parsed.data.location,
     reason: parsed.data.reason ?? "",
     requestedDateTime,
   });

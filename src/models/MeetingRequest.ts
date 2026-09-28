@@ -10,6 +10,7 @@ export interface IMeetingRequest extends Document {
   studentName: string;
   studentGrade: string;
   teacherId: Types.ObjectId;
+  location: string;
   reason: string;
   requestedDateTime: Date;
   confirmedDateTime: Date | null;
@@ -54,6 +55,12 @@ const meetingRequestSchema = new Schema<IMeetingRequest>(
       type: Schema.Types.ObjectId,
       ref: "Teacher",
       required: true,
+    },
+    location: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 200,
     },
     reason: {
       type: String,
