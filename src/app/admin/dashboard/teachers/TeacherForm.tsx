@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { SUBJECTS } from "@/lib/subjects";
+import FileInput from "@/components/admin/FileInput";
 
 interface TeacherFormProps {
   mode: "create" | "edit";
@@ -172,17 +173,12 @@ export default function TeacherForm({
             </button>
           </p>
         )}
-        <input
+        <FileInput
           id="photo"
           name="photo"
-          type="file"
           accept="image/jpeg,image/png,image/webp"
-          aria-describedby="photo-hint"
-          className="mt-1 w-full text-sm"
+          hint="JPEG, PNG, or WebP, max 5MB"
         />
-        <p id="photo-hint" className="mt-1 text-xs text-gray-500">
-          JPEG, PNG, or WebP, max 5MB
-        </p>
       </div>
       {error && (
         <p role="alert" className="text-sm text-maroon">

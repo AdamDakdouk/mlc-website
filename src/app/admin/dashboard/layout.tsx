@@ -4,7 +4,6 @@ import LogoutButton from "./LogoutButton";
 import NavLink from "./NavLink";
 
 const NAV_ITEMS = [
-  { href: "/admin/dashboard", label: "Overview" },
   { href: "/admin/dashboard/announcements", label: "Announcements" },
   { href: "/admin/dashboard/teachers", label: "Teachers" },
   { href: "/admin/dashboard/calendar", label: "Academic Calendar" },

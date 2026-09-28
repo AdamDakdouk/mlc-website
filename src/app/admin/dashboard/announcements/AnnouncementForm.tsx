@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import FileInput from "@/components/admin/FileInput";
 
 interface AnnouncementFormProps {
   mode: "create" | "edit";
@@ -126,17 +127,12 @@ export default function AnnouncementForm({
             </button>
           </p>
         )}
-        <input
+        <FileInput
           id="image"
           name="image"
-          type="file"
           accept="image/jpeg,image/png,image/webp"
-          aria-describedby="image-hint"
-          className="mt-1 w-full text-sm"
+          hint="JPEG, PNG, or WebP, max 5MB"
         />
-        <p id="image-hint" className="mt-1 text-xs text-gray-500">
-          JPEG, PNG, or WebP, max 5MB
-        </p>
       </div>
       {error && (
         <p role="alert" className="text-sm text-maroon">
