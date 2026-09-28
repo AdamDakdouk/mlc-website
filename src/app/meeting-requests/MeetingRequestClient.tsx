@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import Image from "next/image";
 
 interface TeacherOption {
@@ -19,6 +19,26 @@ export default function MeetingRequestClient({ teachers }: MeetingRequestClientP
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function handleTeacherKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (teachers.length === 0) return;
+
+    const currentIndex = teachers.findIndex((t) => t.id === selectedTeacherId);
+
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % teachers.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = currentIndex === -1 ? teachers.length - 1 : (currentIndex - 1 + teachers.length) % teachers.length;
+    }
+
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    setSelectedTeacherId(teachers[nextIndex].id);
+    buttonRefs.current[nextIndex]?.focus();
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,48 +93,57 @@ export default function MeetingRequestClient({ teachers }: MeetingRequestClientP
     <div>
       <fieldset>
         <legend className="mb-3 block text-sm font-medium text-navy">Select a teacher</legend>
-        <div
-          role="radiogroup"
-          aria-label="Select a teacher"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {teachers.map((t) => {
-            const selected = t.id === selectedTeacherId;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => setSelectedTeacherId(t.id)}
-                className={`rounded-lg border p-4 text-left transition ${
-                  selected ? "border-navy bg-navy/5" : "border-gray-200 hover:border-navy/50"
-                }`}
-              >
-                <div className="mb-3 flex justify-center">
-                  {t.photoUrl ? (
-                    <Image
-                      src={t.photoUrl}
-                      alt={t.name}
-                      width={64}
-                      height={64}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      aria-hidden="true"
-                      className="flex h-16 w-16 items-center justify-center rounded-full bg-navy/10 text-xl text-navy"
-                    >
-                      {t.name.slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <p className="text-center text-sm font-semibold text-navy">{t.name}</p>
-                <p className="mt-1 text-center text-xs text-maroon">{t.subjects.join(", ")}</p>
-              </button>
-            );
-          })}
-        </div>
+        {teachers.length === 0 ? (
+          <p className="text-gray-600">No teachers to show yet.</p>
+        ) : (
+          <div
+            role="radiogroup"
+            aria-label="Select a teacher"
+            onKeyDown={handleTeacherKeyDown}
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {teachers.map((t, index) => {
+              const selected = t.id === selectedTeacherId;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  tabIndex={selected || (!selectedTeacherId && index === 0) ? 0 : -1}
+                  ref={(el) => {
+                    buttonRefs.current[index] = el;
+                  }}
+                  onClick={() => setSelectedTeacherId(t.id)}
+                  className={`rounded-lg border p-4 text-left transition ${
+                    selected ? "border-navy bg-navy/5" : "border-gray-200 hover:border-navy/50"
+                  }`}
+                >
+                  <div className="mb-3 flex justify-center">
+                    {t.photoUrl ? (
+                      <Image
+                        src={t.photoUrl}
+                        alt={t.name}
+                        width={64}
+                        height={64}
+                        className="rounded-full object-cover"
+                      />
+                    ) : (
+                      <div
+                        aria-hidden="true"
+                        className="flex h-16 w-16 items-center justify-center rounded-full bg-navy/10 text-xl text-navy"
+                      >
+                        {t.name.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-center text-sm font-semibold text-navy">{t.name}</p>
+                  <p className="mt-1 text-center text-xs text-maroon">{t.subjects.join(", ")}</p>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </fieldset>
 
       <form onSubmit={handleSubmit} className="mt-8 max-w-lg space-y-4">
