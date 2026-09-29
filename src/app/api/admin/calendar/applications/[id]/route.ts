@@ -7,6 +7,7 @@ import { CalendarEvent } from "@/models/CalendarEvent";
 import { Teacher } from "@/models/Teacher";
 import { sendSessionConfirmationEmail } from "@/lib/mailer";
 import { type SessionApplicationStatus } from "@/lib/sessionApplicationStatuses";
+import { deletePaymentProofFile } from "@/lib/paymentProofUpload";
 
 // A SessionApplication is created as "Pending" by the public apply route
 // and only ever transitions away from it here, once — never back to
@@ -92,6 +93,27 @@ export async function PUT(
 
   existing.status = parsed.data.status;
   await existing.save();
+
+  return NextResponse.json({ success: true });
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  if (!mongoose.isValidObjectId(id)) {
+    return NextResponse.json({ error: "Invalid application id" }, { status: 400 });
+  }
+
+  await connectToDatabase();
+  const existing = await SessionApplication.findById(id);
+  if (!existing) {
+    return NextResponse.json({ error: "Application not found" }, { status: 404 });
+  }
+
+  await SessionApplication.deleteOne({ _id: id });
+  await deletePaymentProofFile(existing.paymentProofFilename);
 
   return NextResponse.json({ success: true });
 }

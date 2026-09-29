@@ -185,4 +185,54 @@ describe("PUT/DELETE /api/admin/calendar/applications/[id]", () => {
       expect(res.status).toBe(404);
     });
   });
+
+  describe("DELETE", () => {
+    it("deletes an application and its proof file, without touching applicantCount", async () => {
+      const { application, session } = await createApplication();
+      const { validateAndSavePaymentProof } = require("@/lib/paymentProofUpload");
+      const realProof = await validateAndSavePaymentProof(
+        new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46])], "p.jpg", {
+          type: "image/jpeg",
+        }),
+      );
+      const { SessionApplication } = require("@/models/SessionApplication");
+      application.paymentProofFilename = realProof;
+      await application.save();
+
+      const { DELETE } = require("@/app/api/admin/calendar/applications/[id]/route");
+      const res = await DELETE(makeRequest("DELETE", application._id.toString()), {
+        params: Promise.resolve({ id: application._id.toString() }),
+      });
+      expect(res.status).toBe(200);
+
+      expect(await SessionApplication.findById(application._id)).toBeNull();
+
+      const { readPaymentProofFile } = require("@/lib/paymentProofUpload");
+      await expect(readPaymentProofFile(realProof)).rejects.toThrow();
+
+      const { CalendarEvent } = require("@/models/CalendarEvent");
+      const updatedSession = await CalendarEvent.findById(session._id);
+      expect(updatedSession.applicantCount).toBe(1);
+    });
+
+    it("returns 400 for a malformed id", async () => {
+      const { DELETE } = require("@/app/api/admin/calendar/applications/[id]/route");
+      const res = await DELETE(makeRequest("DELETE", "not-an-id"), {
+        params: Promise.resolve({ id: "not-an-id" }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 for a non-existent id", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+      const missingId = new mongoose.Types.ObjectId().toString();
+      const { DELETE } = require("@/app/api/admin/calendar/applications/[id]/route");
+
+      const res = await DELETE(makeRequest("DELETE", missingId), {
+        params: Promise.resolve({ id: missingId }),
+      });
+      expect(res.status).toBe(404);
+    });
+  });
 });
