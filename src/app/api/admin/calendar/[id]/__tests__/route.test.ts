@@ -93,6 +93,140 @@ describe("PUT/DELETE /api/admin/calendar/[id]", () => {
     expect(res.status).toBe(400);
   });
 
+  async function createTeacher() {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { Teacher } = require("@/models/Teacher");
+    return Teacher.create({ name: "Mr. Smith", email: "mr.smith@example.com", subjects: ["Math"] });
+  }
+
+  it("updates a Session event's session fields", async () => {
+    const event = await createEvent();
+    const teacher = await createTeacher();
+    const { PUT } = require("@/app/api/admin/calendar/[id]/route");
+
+    const res = await PUT(
+      makeRequest("PUT", event._id.toString(), {
+        title: "Math Session",
+        category: "Session",
+        startDate: "2026-10-05",
+        teacherId: teacher._id.toString(),
+        sessionDateTime: "2026-10-05T15:00",
+        durationMinutes: 90,
+        capacity: 10,
+        price: 20,
+      }),
+      { params: Promise.resolve({ id: event._id.toString() }) },
+    );
+    expect(res.status).toBe(200);
+
+    const { CalendarEvent } = require("@/models/CalendarEvent");
+    const updated = await CalendarEvent.findById(event._id);
+    expect(updated.category).toBe("Session");
+    expect(updated.teacherId.toString()).toBe(teacher._id.toString());
+    expect(updated.durationMinutes).toBe(90);
+    expect(updated.capacity).toBe(10);
+    expect(updated.price).toBe(20);
+  });
+
+  it("rejects a Session update missing teacherId", async () => {
+    const event = await createEvent();
+    const { PUT } = require("@/app/api/admin/calendar/[id]/route");
+
+    const res = await PUT(
+      makeRequest("PUT", event._id.toString(), {
+        title: "Math Session",
+        category: "Session",
+        startDate: "2026-10-05",
+        sessionDateTime: "2026-10-05T15:00",
+        durationMinutes: 90,
+        capacity: 10,
+        price: 20,
+      }),
+      { params: Promise.resolve({ id: event._id.toString() }) },
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a Session update with a non-existent teacherId", async () => {
+    const event = await createEvent();
+    const mongoose = require("mongoose");
+    const missingTeacherId = new mongoose.Types.ObjectId().toString();
+    const { PUT } = require("@/app/api/admin/calendar/[id]/route");
+
+    const res = await PUT(
+      makeRequest("PUT", event._id.toString(), {
+        title: "Math Session",
+        category: "Session",
+        startDate: "2026-10-05",
+        teacherId: missingTeacherId,
+        sessionDateTime: "2026-10-05T15:00",
+        durationMinutes: 90,
+        capacity: 10,
+        price: 20,
+      }),
+      { params: Promise.resolve({ id: event._id.toString() }) },
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a Session update with a malformed teacherId", async () => {
+    const event = await createEvent();
+    const { PUT } = require("@/app/api/admin/calendar/[id]/route");
+
+    const res = await PUT(
+      makeRequest("PUT", event._id.toString(), {
+        title: "Math Session",
+        category: "Session",
+        startDate: "2026-10-05",
+        teacherId: "not-a-valid-object-id",
+        sessionDateTime: "2026-10-05T15:00",
+        durationMinutes: 90,
+        capacity: 10,
+        price: 20,
+      }),
+      { params: Promise.resolve({ id: event._id.toString() }) },
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("clears session fields when a Session event's category is switched away from Session", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { CalendarEvent } = require("@/models/CalendarEvent");
+    const teacher = await createTeacher();
+    const sessionEvent = await CalendarEvent.create({
+      title: "Math Session",
+      category: "Session",
+      startDate: new Date("2026-10-05"),
+      endDate: new Date("2026-10-05"),
+      teacherId: teacher._id,
+      sessionDateTime: new Date("2026-10-05T15:00:00.000Z"),
+      durationMinutes: 90,
+      capacity: 10,
+      price: 20,
+    });
+
+    const { PUT } = require("@/app/api/admin/calendar/[id]/route");
+    const res = await PUT(
+      makeRequest("PUT", sessionEvent._id.toString(), {
+        title: "Open House",
+        category: "Event",
+        startDate: "2026-10-05",
+      }),
+      { params: Promise.resolve({ id: sessionEvent._id.toString() }) },
+    );
+    expect(res.status).toBe(200);
+
+    const updated = await CalendarEvent.findById(sessionEvent._id);
+    expect(updated.category).toBe("Event");
+    expect(updated.teacherId).toBeUndefined();
+    expect(updated.sessionDateTime).toBeUndefined();
+    expect(updated.durationMinutes).toBeUndefined();
+    expect(updated.capacity).toBeUndefined();
+    expect(updated.price).toBeUndefined();
+  });
+
   it("returns 400 for a malformed id on PUT", async () => {
     const { PUT } = require("@/app/api/admin/calendar/[id]/route");
     const res = await PUT(makeRequest("PUT", "not-an-id", { title: "x" }), {
