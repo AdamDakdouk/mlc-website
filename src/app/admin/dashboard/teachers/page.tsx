@@ -15,6 +15,7 @@ export default async function TeachersAdminPage() {
   const rows = teachers.map((t) => ({
     id: t._id.toString(),
     name: t.name,
+    email: t.email,
     subjects: t.subjects,
     photoUrl: t.photoUrl,
   }));

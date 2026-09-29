@@ -33,9 +33,9 @@ describe("PUT /api/admin/teachers/reorder", () => {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();
     const { Teacher } = require("@/models/Teacher");
-    const a = await Teacher.create({ name: "A", subjects: ["Math"], order: 0 });
-    const b = await Teacher.create({ name: "B", subjects: ["Math"], order: 1 });
-    const c = await Teacher.create({ name: "C", subjects: ["Math"], order: 2 });
+    const a = await Teacher.create({ name: "A", email: "a@example.com", subjects: ["Math"], order: 0 });
+    const b = await Teacher.create({ name: "B", email: "b@example.com", subjects: ["Math"], order: 1 });
+    const c = await Teacher.create({ name: "C", email: "c@example.com", subjects: ["Math"], order: 2 });
 
     const { PUT } = require("@/app/api/admin/teachers/reorder/route");
     const res = await PUT(
@@ -73,8 +73,8 @@ describe("PUT /api/admin/teachers/reorder", () => {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();
     const { Teacher } = require("@/models/Teacher");
-    const a = await Teacher.create({ name: "A", subjects: ["Math"], order: 0 });
-    const b = await Teacher.create({ name: "B", subjects: ["Math"], order: 1 });
+    const a = await Teacher.create({ name: "A", email: "a@example.com", subjects: ["Math"], order: 0 });
+    const b = await Teacher.create({ name: "B", email: "b@example.com", subjects: ["Math"], order: 1 });
 
     const { PUT } = require("@/app/api/admin/teachers/reorder/route");
     const res = await PUT(
@@ -88,7 +88,7 @@ describe("PUT /api/admin/teachers/reorder", () => {
     await connectToDatabase();
     const mongooseFresh = require("mongoose");
     const { Teacher } = require("@/models/Teacher");
-    const a = await Teacher.create({ name: "A", subjects: ["Math"], order: 0 });
+    const a = await Teacher.create({ name: "A", email: "a@example.com", subjects: ["Math"], order: 0 });
     const missingId = new mongooseFresh.Types.ObjectId().toString();
 
     const { PUT } = require("@/app/api/admin/teachers/reorder/route");

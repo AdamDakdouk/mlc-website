@@ -44,6 +44,7 @@ describe("POST /api/admin/teachers", () => {
 
     const formData = new FormData();
     formData.set("name", "Jane Doe");
+    formData.set("email", "jane.doe@example.com");
     formData.append("subjects", "Math");
     formData.append("subjects", "Physics");
 
@@ -55,6 +56,7 @@ describe("POST /api/admin/teachers", () => {
     const { Teacher } = require("@/models/Teacher");
     const saved = await Teacher.findById(data.id);
     expect(saved.name).toBe("Jane Doe");
+    expect(saved.email).toBe("jane.doe@example.com");
     expect(saved.subjects).toEqual(["Math", "Physics"]);
     expect(saved.photoUrl).toBeNull();
     expect(saved.order).toBe(0);
@@ -67,6 +69,7 @@ describe("POST /api/admin/teachers", () => {
 
     const formData = new FormData();
     formData.set("name", "Photo Teacher");
+    formData.set("email", "photo.teacher@example.com");
     formData.append("subjects", "English");
     formData.set(
       "photo",
@@ -90,11 +93,13 @@ describe("POST /api/admin/teachers", () => {
 
     const formData1 = new FormData();
     formData1.set("name", "First Teacher");
+    formData1.set("email", "first.teacher@example.com");
     formData1.append("subjects", "Math");
     await POST(makeRequest(formData1));
 
     const formData2 = new FormData();
     formData2.set("name", "Second Teacher");
+    formData2.set("email", "second.teacher@example.com");
     formData2.append("subjects", "Math");
     const res2 = await POST(makeRequest(formData2));
     const data2 = await res2.json();
@@ -110,6 +115,34 @@ describe("POST /api/admin/teachers", () => {
     const { POST } = require("@/app/api/admin/teachers/route");
 
     const formData = new FormData();
+    formData.set("email", "no.name@example.com");
+    formData.append("subjects", "Math");
+
+    const res = await POST(makeRequest(formData));
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a missing email", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { POST } = require("@/app/api/admin/teachers/route");
+
+    const formData = new FormData();
+    formData.set("name", "No Email");
+    formData.append("subjects", "Math");
+
+    const res = await POST(makeRequest(formData));
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an invalid email", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { POST } = require("@/app/api/admin/teachers/route");
+
+    const formData = new FormData();
+    formData.set("name", "Bad Email");
+    formData.set("email", "not-an-email");
     formData.append("subjects", "Math");
 
     const res = await POST(makeRequest(formData));
@@ -123,6 +156,7 @@ describe("POST /api/admin/teachers", () => {
 
     const formData = new FormData();
     formData.set("name", "No Subjects");
+    formData.set("email", "no.subjects@example.com");
 
     const res = await POST(makeRequest(formData));
     expect(res.status).toBe(400);
@@ -135,6 +169,7 @@ describe("POST /api/admin/teachers", () => {
 
     const formData = new FormData();
     formData.set("name", "Bad Subject Teacher");
+    formData.set("email", "bad.subject@example.com");
     formData.append("subjects", "Underwater Basket Weaving");
 
     const res = await POST(makeRequest(formData));
@@ -148,6 +183,7 @@ describe("POST /api/admin/teachers", () => {
 
     const formData = new FormData();
     formData.set("name", "Bad Photo Teacher");
+    formData.set("email", "bad.photo@example.com");
     formData.append("subjects", "Math");
     formData.set(
       "photo",
@@ -162,6 +198,7 @@ describe("POST /api/admin/teachers", () => {
     const { POST } = require("@/app/api/admin/teachers/route");
     const formData = new FormData();
     formData.set("name", "Big Request");
+    formData.set("email", "big.request@example.com");
     formData.append("subjects", "Math");
 
     const request = new NextRequest("http://localhost/api/admin/teachers", {

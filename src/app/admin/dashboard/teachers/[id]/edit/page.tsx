@@ -31,6 +31,7 @@ export default async function EditTeacherPage({
         mode="edit"
         teacherId={teacher._id.toString()}
         initialName={teacher.name}
+        initialEmail={teacher.email}
         initialSubjects={teacher.subjects}
         initialQualifications={teacher.qualifications}
         initialExperience={teacher.experience}

@@ -9,6 +9,11 @@ import { SUBJECTS } from "@/lib/subjects";
 
 const teacherFieldsSchema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Name is too long"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .max(254, "Email is too long")
+    .email("Invalid email address"),
   subjects: z.array(z.enum(SUBJECTS)).min(1, "At least one subject is required"),
   qualifications: z.string().max(2000, "Qualifications is too long"),
   experience: z.string().max(2000, "Experience is too long"),
@@ -46,6 +51,7 @@ export async function PUT(
 
   const parsed = teacherFieldsSchema.safeParse({
     name: formData.get("name"),
+    email: formData.get("email"),
     subjects: formData.getAll("subjects"),
     qualifications: formData.get("qualifications") ?? "",
     experience: formData.get("experience") ?? "",
@@ -84,6 +90,7 @@ export async function PUT(
   }
 
   existing.name = parsed.data.name;
+  existing.email = parsed.data.email;
   existing.subjects = parsed.data.subjects;
   existing.qualifications = parsed.data.qualifications;
   existing.experience = parsed.data.experience;

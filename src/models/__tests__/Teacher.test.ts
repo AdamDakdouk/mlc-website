@@ -22,9 +22,11 @@ describe("Teacher model", () => {
     const { Teacher } = require("@/models/Teacher");
     const teacher = await Teacher.create({
       name: "Jane Doe",
+      email: "jane.doe@example.com",
       subjects: ["Math", "Physics"],
     });
     expect(teacher.name).toBe("Jane Doe");
+    expect(teacher.email).toBe("jane.doe@example.com");
     expect(teacher.photoUrl).toBeNull();
     expect(teacher.subjects).toEqual(["Math", "Physics"]);
     expect(teacher.qualifications).toBe("");
@@ -38,6 +40,7 @@ describe("Teacher model", () => {
     const { Teacher } = require("@/models/Teacher");
     const teacher = await Teacher.create({
       name: "John Smith",
+      email: "john.smith@example.com",
       subjects: ["English"],
       qualifications: "MA English Literature",
       experience: "10 years teaching high school English",
@@ -52,27 +55,40 @@ describe("Teacher model", () => {
 
   it("rejects a missing name", async () => {
     const { Teacher } = require("@/models/Teacher");
-    await expect(Teacher.create({ subjects: ["Math"] })).rejects.toThrow();
+    await expect(
+      Teacher.create({ email: "jane.doe@example.com", subjects: ["Math"] }),
+    ).rejects.toThrow();
   });
 
   it("rejects an empty subjects array", async () => {
     const { Teacher } = require("@/models/Teacher");
     await expect(
-      Teacher.create({ name: "No Subjects", subjects: [] }),
+      Teacher.create({ name: "No Subjects", email: "no.subjects@example.com", subjects: [] }),
     ).rejects.toThrow();
   });
 
   it("rejects a subject not in the predefined list", async () => {
     const { Teacher } = require("@/models/Teacher");
     await expect(
-      Teacher.create({ name: "Bad Subject", subjects: ["Underwater Basket Weaving"] }),
+      Teacher.create({
+        name: "Bad Subject",
+        email: "bad.subject@example.com",
+        subjects: ["Underwater Basket Weaving"],
+      }),
     ).rejects.toThrow();
   });
 
   it("rejects a name over 200 characters", async () => {
     const { Teacher } = require("@/models/Teacher");
     await expect(
-      Teacher.create({ name: "A".repeat(201), subjects: ["Math"] }),
+      Teacher.create({ name: "A".repeat(201), email: "long.name@example.com", subjects: ["Math"] }),
+    ).rejects.toThrow();
+  });
+
+  it("rejects a missing email", async () => {
+    const { Teacher } = require("@/models/Teacher");
+    await expect(
+      Teacher.create({ name: "No Email", subjects: ["Math"] }),
     ).rejects.toThrow();
   });
 });

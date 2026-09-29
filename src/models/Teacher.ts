@@ -3,6 +3,7 @@ import { SUBJECTS } from "@/lib/subjects";
 
 export interface ITeacher extends Document {
   name: string;
+  email: string;
   photoUrl: string | null;
   subjects: string[];
   qualifications: string;
@@ -19,6 +20,12 @@ const teacherSchema = new Schema<ITeacher>(
       required: true,
       trim: true,
       maxlength: 200,
+    },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 254,
     },
     photoUrl: {
       type: String,

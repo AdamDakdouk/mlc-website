@@ -26,7 +26,7 @@ describe("PUT/DELETE /api/admin/meeting-requests/[id]", () => {
     await connectToDatabase();
     const { Teacher } = require("@/models/Teacher");
     const { MeetingRequest } = require("@/models/MeetingRequest");
-    const teacher = await Teacher.create({ name: "Mr. Smith", subjects: ["Math"] });
+    const teacher = await Teacher.create({ name: "Mr. Smith", email: "mr.smith@example.com", subjects: ["Math"] });
     return MeetingRequest.create({
       parentName: "Jane Doe",
       parentEmail: "jane@example.com",

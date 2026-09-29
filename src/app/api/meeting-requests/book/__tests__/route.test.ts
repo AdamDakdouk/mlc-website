@@ -34,7 +34,7 @@ describe("POST /api/meeting-requests/book", () => {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();
     const { Teacher } = require("@/models/Teacher");
-    return Teacher.create({ name: "Mr. Smith", subjects: ["Math"] });
+    return Teacher.create({ name: "Mr. Smith", email: "mr.smith@example.com", subjects: ["Math"] });
   }
 
   it("creates a request with all fields", async () => {

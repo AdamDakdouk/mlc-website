@@ -25,6 +25,7 @@ import DeleteEntityButton from "@/components/admin/DeleteEntityButton";
 interface TeacherRow {
   id: string;
   name: string;
+  email: string;
   subjects: string[];
   photoUrl: string | null;
 }
@@ -72,6 +73,7 @@ function SortableRow({ row }: { row: TeacherRow }) {
         )}
       </td>
       <td className="py-2 pr-4">{row.name}</td>
+      <td className="py-2 pr-4 text-gray-600">{row.email}</td>
       <td className="py-2 pr-4 text-gray-600">{row.subjects.join(", ")}</td>
       <td className="py-2 text-right">
         <Link
@@ -170,6 +172,9 @@ export default function TeachersTable({ initialRows }: { initialRows: TeacherRow
                 </th>
                 <th scope="col" className="py-2 pr-4">
                   Name
+                </th>
+                <th scope="col" className="py-2 pr-4">
+                  Email
                 </th>
                 <th scope="col" className="py-2 pr-4">
                   Subjects

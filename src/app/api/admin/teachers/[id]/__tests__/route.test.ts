@@ -43,11 +43,16 @@ describe("/api/admin/teachers/[id]", () => {
       const { connectToDatabase } = require("@/lib/db");
       await connectToDatabase();
       const { Teacher } = require("@/models/Teacher");
-      const existing = await Teacher.create({ name: "Old Name", subjects: ["Math"] });
+      const existing = await Teacher.create({
+        name: "Old Name",
+        email: "old.name@example.com",
+        subjects: ["Math"],
+      });
 
       const { PUT } = require("@/app/api/admin/teachers/[id]/route");
       const formData = new FormData();
       formData.set("name", "New Name");
+      formData.set("email", "new.name@example.com");
       formData.append("subjects", "Physics");
       formData.append("subjects", "Chemistry");
       formData.set("qualifications", "PhD Physics");
@@ -60,6 +65,7 @@ describe("/api/admin/teachers/[id]", () => {
 
       const updated = await Teacher.findById(existing._id);
       expect(updated.name).toBe("New Name");
+      expect(updated.email).toBe("new.name@example.com");
       expect(updated.subjects).toEqual(["Physics", "Chemistry"]);
       expect(updated.qualifications).toBe("PhD Physics");
       expect(updated.experience).toBe("5 years");
@@ -77,6 +83,7 @@ describe("/api/admin/teachers/[id]", () => {
       );
       const existing = await Teacher.create({
         name: "Has Photo",
+        email: "has.photo@example.com",
         subjects: ["Math"],
         photoUrl: oldPhotoUrl,
       });
@@ -84,6 +91,7 @@ describe("/api/admin/teachers/[id]", () => {
       const { PUT } = require("@/app/api/admin/teachers/[id]/route");
       const formData = new FormData();
       formData.set("name", "Has Photo");
+      formData.set("email", "has.photo@example.com");
       formData.append("subjects", "Math");
       formData.set(
         "photo",
@@ -113,11 +121,17 @@ describe("/api/admin/teachers/[id]", () => {
         new File([new Uint8Array(JPEG_BYTES)], "photo.jpg", { type: "image/jpeg" }),
         "teachers",
       );
-      const existing = await Teacher.create({ name: "T", subjects: ["Math"], photoUrl });
+      const existing = await Teacher.create({
+        name: "T",
+        email: "t@example.com",
+        subjects: ["Math"],
+        photoUrl,
+      });
 
       const { PUT } = require("@/app/api/admin/teachers/[id]/route");
       const formData = new FormData();
       formData.set("name", "T");
+      formData.set("email", "t@example.com");
       formData.append("subjects", "Math");
       formData.set("removePhoto", "true");
 
@@ -137,6 +151,7 @@ describe("/api/admin/teachers/[id]", () => {
       const { PUT } = require("@/app/api/admin/teachers/[id]/route");
       const formData = new FormData();
       formData.set("name", "T");
+      formData.set("email", "t@example.com");
       formData.append("subjects", "Math");
 
       const fakeId = new mongoose.Types.ObjectId().toString();
@@ -153,6 +168,7 @@ describe("/api/admin/teachers/[id]", () => {
       const { PUT } = require("@/app/api/admin/teachers/[id]/route");
       const formData = new FormData();
       formData.set("name", "T");
+      formData.set("email", "t@example.com");
       formData.append("subjects", "Math");
 
       const res = await PUT(makeRequest("not-an-id", formData), {
@@ -165,11 +181,37 @@ describe("/api/admin/teachers/[id]", () => {
       const { connectToDatabase } = require("@/lib/db");
       await connectToDatabase();
       const { Teacher } = require("@/models/Teacher");
-      const existing = await Teacher.create({ name: "T", subjects: ["Math"] });
+      const existing = await Teacher.create({
+        name: "T",
+        email: "t@example.com",
+        subjects: ["Math"],
+      });
 
       const { PUT } = require("@/app/api/admin/teachers/[id]/route");
       const formData = new FormData();
       formData.set("name", "A".repeat(201));
+      formData.set("email", "t@example.com");
+      formData.append("subjects", "Math");
+
+      const res = await PUT(makeRequest(existing._id.toString(), formData), {
+        params: Promise.resolve({ id: existing._id.toString() }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("rejects a missing email", async () => {
+      const { connectToDatabase } = require("@/lib/db");
+      await connectToDatabase();
+      const { Teacher } = require("@/models/Teacher");
+      const existing = await Teacher.create({
+        name: "T",
+        email: "t@example.com",
+        subjects: ["Math"],
+      });
+
+      const { PUT } = require("@/app/api/admin/teachers/[id]/route");
+      const formData = new FormData();
+      formData.set("name", "T");
       formData.append("subjects", "Math");
 
       const res = await PUT(makeRequest(existing._id.toString(), formData), {
@@ -182,11 +224,16 @@ describe("/api/admin/teachers/[id]", () => {
       const { connectToDatabase } = require("@/lib/db");
       await connectToDatabase();
       const { Teacher } = require("@/models/Teacher");
-      const existing = await Teacher.create({ name: "T", subjects: ["Math"] });
+      const existing = await Teacher.create({
+        name: "T",
+        email: "t@example.com",
+        subjects: ["Math"],
+      });
 
       const { PUT } = require("@/app/api/admin/teachers/[id]/route");
       const formData = new FormData();
       formData.set("name", "T");
+      formData.set("email", "t@example.com");
       formData.append("subjects", "Math");
 
       const request = new NextRequest(
@@ -222,7 +269,12 @@ describe("/api/admin/teachers/[id]", () => {
         new File([new Uint8Array(JPEG_BYTES)], "photo.jpg", { type: "image/jpeg" }),
         "teachers",
       );
-      const existing = await Teacher.create({ name: "T", subjects: ["Math"], photoUrl });
+      const existing = await Teacher.create({
+        name: "T",
+        email: "t@example.com",
+        subjects: ["Math"],
+        photoUrl,
+      });
 
       const { DELETE } = require("@/app/api/admin/teachers/[id]/route");
       const res = await DELETE(makeRequest(existing._id.toString()), {
@@ -243,7 +295,7 @@ describe("/api/admin/teachers/[id]", () => {
       const { Teacher } = require("@/models/Teacher");
       const { MeetingRequest } = require("@/models/MeetingRequest");
 
-      const existing = await Teacher.create({ name: "T", subjects: ["Math"] });
+      const existing = await Teacher.create({ name: "T", email: "t@example.com", subjects: ["Math"] });
       await MeetingRequest.create({
         parentName: "Jane Doe",
         parentEmail: "jane@example.com",

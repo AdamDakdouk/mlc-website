@@ -10,6 +10,7 @@ interface TeacherFormProps {
   mode: "create" | "edit";
   teacherId?: string;
   initialName?: string;
+  initialEmail?: string;
   initialSubjects?: string[];
   initialQualifications?: string;
   initialExperience?: string;
@@ -20,6 +21,7 @@ export default function TeacherForm({
   mode,
   teacherId,
   initialName = "",
+  initialEmail = "",
   initialSubjects = [],
   initialQualifications = "",
   initialExperience = "",
@@ -27,6 +29,7 @@ export default function TeacherForm({
 }: TeacherFormProps) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
+  const [email, setEmail] = useState(initialEmail);
   const [subjects, setSubjects] = useState<string[]>(initialSubjects);
   const [qualifications, setQualifications] = useState(initialQualifications);
   const [experience, setExperience] = useState(initialExperience);
@@ -98,6 +101,20 @@ export default function TeacherForm({
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
+          className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-navy focus:outline-none"
+        />
+      </div>
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-navy">
+          Email
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-navy focus:outline-none"
         />
       </div>
