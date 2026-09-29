@@ -36,6 +36,12 @@ export interface CalendarEventLike {
   startDate: string; // YYYY-MM-DD, UTC
   endDate: string; // YYYY-MM-DD, UTC
   description: string;
+  teacherName?: string;
+  sessionDateTime?: string; // ISO
+  durationMinutes?: number;
+  price?: number;
+  capacity?: number;
+  applicantCount?: number;
 }
 
 export interface GridEvent extends CalendarEventLike {

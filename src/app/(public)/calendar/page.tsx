@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { connectToDatabase } from "@/lib/db";
 import { CalendarEvent } from "@/models/CalendarEvent";
+import { Teacher } from "@/models/Teacher";
 import { parseMonthParam, formatMonthParam, adjacentMonth, buildMonthGrid } from "./monthUtils";
 import CalendarGrid from "./CalendarGrid";
 
@@ -33,12 +34,16 @@ export default async function CalendarPage({
   // days from the previous month and leading days from the next.
   const rangeStart = new Date(Date.UTC(previous.year, previous.month - 1, 1));
   const rangeEnd = new Date(Date.UTC(next.year, next.month, 0));
-  const events = await CalendarEvent.find({
-    startDate: { $lte: rangeEnd },
-    endDate: { $gte: rangeStart },
-  })
-    .sort({ startDate: 1 })
-    .lean();
+  const [events, teachers] = await Promise.all([
+    CalendarEvent.find({
+      startDate: { $lte: rangeEnd },
+      endDate: { $gte: rangeStart },
+    })
+      .sort({ startDate: 1 })
+      .lean(),
+    Teacher.find().select("name").lean(),
+  ]);
+  const teacherNameById = new Map(teachers.map((t) => [t._id.toString(), t.name]));
 
   const eventsForGrid = events.map((e) => ({
     id: e._id.toString(),
@@ -47,6 +52,16 @@ export default async function CalendarPage({
     startDate: e.startDate.toISOString().slice(0, 10),
     endDate: e.endDate.toISOString().slice(0, 10),
     description: e.description,
+    ...(e.category === "Session"
+      ? {
+          teacherName: e.teacherId ? (teacherNameById.get(e.teacherId.toString()) ?? "TBD") : "TBD",
+          sessionDateTime: e.sessionDateTime!.toISOString(),
+          durationMinutes: e.durationMinutes,
+          price: e.price,
+          capacity: e.capacity,
+          applicantCount: e.applicantCount,
+        }
+      : {}),
   }));
 
   const days = buildMonthGrid(current, eventsForGrid);
