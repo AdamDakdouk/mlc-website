@@ -266,6 +266,48 @@ describe("PUT/DELETE /api/admin/calendar/[id]", () => {
     expect(await CalendarEvent.findById(event._id)).toBeNull();
   });
 
+  it("returns 409 and does not delete when the session has existing applications", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { CalendarEvent } = require("@/models/CalendarEvent");
+    const { SessionApplication } = require("@/models/SessionApplication");
+    const { Teacher } = require("@/models/Teacher");
+
+    const teacher = await Teacher.create({
+      name: "Mr. Smith",
+      email: "mr.smith@example.com",
+      subjects: ["Math"],
+    });
+    const sessionEvent = await CalendarEvent.create({
+      title: "Math Session",
+      category: "Session",
+      startDate: new Date("2026-10-05"),
+      endDate: new Date("2026-10-05"),
+      teacherId: teacher._id,
+      sessionDateTime: new Date("2026-10-05T15:00:00.000Z"),
+      durationMinutes: 90,
+      capacity: 10,
+      price: 20,
+    });
+    await SessionApplication.create({
+      sessionId: sessionEvent._id,
+      name: "Jane Doe",
+      email: "jane@example.com",
+      phone: "123",
+      address: "123 Main St",
+      paymentProofFilename: "11111111-1111-1111-1111-111111111111.jpg",
+    });
+
+    const { DELETE } = require("@/app/api/admin/calendar/[id]/route");
+    const res = await DELETE(makeRequest("DELETE", sessionEvent._id.toString()), {
+      params: Promise.resolve({ id: sessionEvent._id.toString() }),
+    });
+    expect(res.status).toBe(409);
+
+    const found = await CalendarEvent.findById(sessionEvent._id);
+    expect(found).not.toBeNull();
+  });
+
   it("returns 400 for a malformed id on DELETE", async () => {
     const { DELETE } = require("@/app/api/admin/calendar/[id]/route");
     const res = await DELETE(makeRequest("DELETE", "not-an-id"), {
