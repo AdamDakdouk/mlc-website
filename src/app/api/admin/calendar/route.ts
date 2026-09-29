@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { CalendarEvent } from "@/models/CalendarEvent";
@@ -92,6 +93,9 @@ export async function POST(request: NextRequest) {
   if (parsed.data.category === "Session") {
     if (!isRealDateTime(parsed.data.sessionDateTime!)) {
       return NextResponse.json({ error: "Invalid date/time" }, { status: 400 });
+    }
+    if (!mongoose.isValidObjectId(parsed.data.teacherId)) {
+      return NextResponse.json({ error: "Invalid teacher" }, { status: 400 });
     }
     const teacher = await Teacher.findById(parsed.data.teacherId);
     if (!teacher) {

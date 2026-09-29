@@ -298,6 +298,24 @@ describe("POST /api/admin/calendar", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects a Session event with a malformed teacherId", async () => {
+    const { POST } = require("@/app/api/admin/calendar/route");
+
+    const res = await POST(
+      makeRequest({
+        title: "Math Session",
+        category: "Session",
+        startDate: "2026-10-05",
+        teacherId: "not-a-valid-object-id",
+        sessionDateTime: "2026-10-05T15:00",
+        durationMinutes: 90,
+        capacity: 10,
+        price: 20,
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("rejects a Session event with an invalid sessionDateTime", async () => {
     const teacher = await createTeacher();
     const { POST } = require("@/app/api/admin/calendar/route");
