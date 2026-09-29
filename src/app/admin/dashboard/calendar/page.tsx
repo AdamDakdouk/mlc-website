@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connectToDatabase } from "@/lib/db";
 import { CalendarEvent } from "@/models/CalendarEvent";
+import { SessionApplication } from "@/models/SessionApplication";
 import DeleteEntityButton from "@/components/admin/DeleteEntityButton";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,20 @@ export default async function CalendarAdminPage() {
   await connectToDatabase();
   const events = await CalendarEvent.find().sort({ startDate: 1 }).lean();
 
+  const rows = await Promise.all(
+    events.map(async (e) => ({
+      id: e._id.toString(),
+      title: e.title,
+      category: e.category,
+      startDate: e.startDate,
+      endDate: e.endDate,
+      applicationCount:
+        e.category === "Session"
+          ? await SessionApplication.countDocuments({ sessionId: e._id })
+          : null,
+    })),
+  );
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -26,7 +41,7 @@ export default async function CalendarAdminPage() {
           + New
         </Link>
       </div>
-      {events.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="text-gray-600">No events yet.</p>
       ) : (
         <div className="overflow-x-auto">
@@ -42,30 +57,45 @@ export default async function CalendarAdminPage() {
                 <th scope="col" className="py-2 pr-4">
                   Date
                 </th>
+                <th scope="col" className="py-2 pr-4">
+                  Applications
+                </th>
                 <th scope="col" className="py-2">
                   <span className="sr-only">Actions</span>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {events.map((e) => (
-                <tr key={e._id.toString()} className="border-b border-gray-100">
-                  <td className="py-2 pr-4">{e.title}</td>
-                  <td className="py-2 pr-4 text-gray-600">{e.category}</td>
+              {rows.map((r) => (
+                <tr key={r.id} className="border-b border-gray-100">
+                  <td className="py-2 pr-4">{r.title}</td>
+                  <td className="py-2 pr-4 text-gray-600">{r.category}</td>
                   <td className="py-2 pr-4 text-gray-600">
-                    {formatDateRange(e.startDate, e.endDate)}
+                    {formatDateRange(r.startDate, r.endDate)}
+                  </td>
+                  <td className="py-2 pr-4 text-gray-600">
+                    {r.applicationCount === null ? (
+                      "—"
+                    ) : (
+                      <Link
+                        href={`/admin/dashboard/calendar/${r.id}/applications`}
+                        className="text-navy hover:underline"
+                      >
+                        {r.applicationCount}
+                      </Link>
+                    )}
                   </td>
                   <td className="py-2 text-right">
                     <Link
-                      href={`/admin/dashboard/calendar/${e._id.toString()}/edit`}
-                      aria-label={`Edit "${e.title}"`}
+                      href={`/admin/dashboard/calendar/${r.id}/edit`}
+                      aria-label={`Edit "${r.title}"`}
                       className="mr-3 text-navy hover:underline"
                     >
                       Edit
                     </Link>
                     <DeleteEntityButton
-                      id={e._id.toString()}
-                      label={e.title}
+                      id={r.id}
+                      label={r.title}
                       endpoint="/api/admin/calendar"
                     />
                   </td>
