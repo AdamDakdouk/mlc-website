@@ -80,6 +80,7 @@ export default function SessionApplicationActions({
           type="button"
           onClick={handleDelete}
           disabled={loading}
+          aria-label={`Delete application from "${applicantLabel}"`}
           className="text-maroon hover:underline disabled:opacity-50"
         >
           Delete
@@ -100,6 +101,7 @@ export default function SessionApplicationActions({
           type="button"
           onClick={() => updateStatus("Verified")}
           disabled={loading}
+          aria-label={`Verify application from "${applicantLabel}"`}
           className="rounded bg-navy px-3 py-1 text-xs font-medium text-white transition hover:bg-navy/90 disabled:opacity-50"
         >
           Verify
@@ -108,6 +110,7 @@ export default function SessionApplicationActions({
           type="button"
           onClick={() => updateStatus("Rejected")}
           disabled={loading}
+          aria-label={`Reject application from "${applicantLabel}"`}
           className="rounded border border-maroon px-3 py-1 text-xs font-medium text-maroon transition hover:bg-maroon/10 disabled:opacity-50"
         >
           Reject
@@ -116,6 +119,7 @@ export default function SessionApplicationActions({
           type="button"
           onClick={handleDelete}
           disabled={loading}
+          aria-label={`Delete application from "${applicantLabel}"`}
           className="text-maroon hover:underline disabled:opacity-50"
         >
           Delete
