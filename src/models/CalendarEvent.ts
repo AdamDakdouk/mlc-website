@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document, type Model } from "mongoose";
+import mongoose, { Schema, type Document, type Model, type Types } from "mongoose";
 import { CATEGORIES, type Category } from "@/lib/calendarCategories";
 
 export interface ICalendarEvent extends Document {
@@ -7,6 +7,12 @@ export interface ICalendarEvent extends Document {
   startDate: Date;
   endDate: Date;
   description: string;
+  teacherId?: Types.ObjectId;
+  sessionDateTime?: Date;
+  durationMinutes?: number;
+  capacity?: number;
+  price?: number;
+  applicantCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +49,39 @@ const calendarEventSchema = new Schema<ICalendarEvent>(
       default: "",
       trim: true,
       maxlength: 1000,
+    },
+    teacherId: {
+      type: Schema.Types.ObjectId,
+      ref: "Teacher",
+      required: false,
+    },
+    sessionDateTime: {
+      type: Date,
+      required: false,
+    },
+    durationMinutes: {
+      type: Number,
+      required: false,
+      min: 1,
+      max: 480,
+    },
+    capacity: {
+      type: Number,
+      required: false,
+      min: 1,
+      max: 500,
+    },
+    price: {
+      type: Number,
+      required: false,
+      min: 0,
+      max: 100000,
+    },
+    applicantCount: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
     },
   },
   { timestamps: true },

@@ -53,6 +53,67 @@ describe("CalendarEvent model", () => {
     expect(event.endDate.toISOString()).toContain("2027-01-05");
   });
 
+  it("defaults applicantCount to 0", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { CalendarEvent } = require("@/models/CalendarEvent");
+
+    const event = await CalendarEvent.create({
+      title: "Open House",
+      category: "Event",
+      startDate: new Date("2026-10-05"),
+      endDate: new Date("2026-10-05"),
+    });
+
+    expect(event.applicantCount).toBe(0);
+  });
+
+  it("stores Session-only fields", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { CalendarEvent } = require("@/models/CalendarEvent");
+    const mongoose = require("mongoose");
+    const teacherId = new mongoose.Types.ObjectId();
+
+    const event = await CalendarEvent.create({
+      title: "Math Session",
+      category: "Session",
+      startDate: new Date("2026-10-05"),
+      endDate: new Date("2026-10-05"),
+      teacherId,
+      sessionDateTime: new Date("2026-10-05T15:00:00.000Z"),
+      durationMinutes: 90,
+      capacity: 10,
+      price: 20,
+    });
+
+    expect(event.teacherId.toString()).toBe(teacherId.toString());
+    expect(event.sessionDateTime.toISOString()).toBe("2026-10-05T15:00:00.000Z");
+    expect(event.durationMinutes).toBe(90);
+    expect(event.capacity).toBe(10);
+    expect(event.price).toBe(20);
+    expect(event.applicantCount).toBe(0);
+  });
+
+  it("allows a non-Session event with no session fields set", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { CalendarEvent } = require("@/models/CalendarEvent");
+
+    const event = await CalendarEvent.create({
+      title: "Winter Break",
+      category: "Holiday",
+      startDate: new Date("2026-12-20"),
+      endDate: new Date("2027-01-05"),
+    });
+
+    expect(event.teacherId).toBeUndefined();
+    expect(event.sessionDateTime).toBeUndefined();
+    expect(event.durationMinutes).toBeUndefined();
+    expect(event.capacity).toBeUndefined();
+    expect(event.price).toBeUndefined();
+  });
+
   it("rejects a missing title", async () => {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();
