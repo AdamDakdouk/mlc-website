@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { GridDay, GridEvent } from "./monthUtils";
 import { CATEGORY_BG_CLASS, CATEGORY_TEXT_CLASS, type Category } from "@/lib/calendarCategories";
 
@@ -88,9 +89,15 @@ export default function CalendarGrid({ days }: { days: GridDay[] }) {
             <div>
               <h3 className="font-semibold text-navy">{selected.title}</h3>
               <p className="text-sm text-gray-600">
-                {selected.startDate === selected.endDate
-                  ? selected.startDate
-                  : `${selected.startDate} – ${selected.endDate}`}
+                {selected.category === "Session" && selected.sessionDateTime
+                  ? new Date(selected.sessionDateTime).toLocaleString(undefined, {
+                      timeZone: "UTC",
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })
+                  : selected.startDate === selected.endDate
+                    ? selected.startDate
+                    : `${selected.startDate} – ${selected.endDate}`}
               </p>
             </div>
             <button
@@ -103,8 +110,54 @@ export default function CalendarGrid({ days }: { days: GridDay[] }) {
             </button>
           </div>
           {selected.description && <p className="mt-2 text-sm text-gray-700">{selected.description}</p>}
+          {selected.category === "Session" && (
+            <SessionDetails event={selected} />
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function SessionDetails({ event }: { event: GridEvent }) {
+  const capacity = event.capacity ?? 0;
+  const applicantCount = event.applicantCount ?? 0;
+  const spotsRemaining = capacity - applicantCount;
+  const isFull = spotsRemaining <= 0;
+  const hasPassed = event.sessionDateTime ? new Date(event.sessionDateTime).getTime() <= Date.now() : false;
+
+  return (
+    <dl className="mt-3 space-y-1 text-sm text-gray-700">
+      <div>
+        <dt className="inline font-medium text-navy">Teacher: </dt>
+        <dd className="inline">{event.teacherName}</dd>
+      </div>
+      <div>
+        <dt className="inline font-medium text-navy">Duration: </dt>
+        <dd className="inline">{event.durationMinutes} minutes</dd>
+      </div>
+      <div>
+        <dt className="inline font-medium text-navy">Price: </dt>
+        <dd className="inline">${event.price}</dd>
+      </div>
+      <div>
+        <dt className="inline font-medium text-navy">Spots remaining: </dt>
+        <dd className="inline">{Math.max(0, spotsRemaining)}</dd>
+      </div>
+      <div className="pt-2">
+        {hasPassed ? (
+          <span className="text-maroon">Applications closed</span>
+        ) : isFull ? (
+          <span className="text-maroon">Session full</span>
+        ) : (
+          <Link
+            href={`/calendar/${event.id}/apply`}
+            className="inline-block rounded bg-navy px-4 py-2 text-sm font-medium text-white transition hover:bg-navy/90"
+          >
+            Apply
+          </Link>
+        )}
+      </div>
+    </dl>
   );
 }
