@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { JobPosting } from "@/models/JobPosting";
 import JobPostingForm from "../../JobPostingForm";
+import BackLink from "@/components/admin/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function EditJobPostingPage({
 
   return (
     <div>
+      <BackLink href="/admin/dashboard/careers" label="Back to Careers" />
       <h1 className="mb-6 text-2xl font-semibold text-navy">Edit Job Posting</h1>
       <JobPostingForm
         mode="edit"

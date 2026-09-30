@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 import { JobPosting } from "@/models/JobPosting";
 import { Application } from "@/models/Application";
 import DeleteEntityButton from "@/components/admin/DeleteEntityButton";
+import BackLink from "@/components/admin/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function ApplicationsPage({
 
   return (
     <div>
+      <BackLink href="/admin/dashboard/careers" label="Back to Careers" />
       <h1 className="mb-2 text-2xl font-semibold text-navy">Applications</h1>
       <p className="mb-6 text-gray-600">{posting.title}</p>
       {applications.length === 0 ? (

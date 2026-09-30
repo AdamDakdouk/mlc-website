@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { MeetingRequest } from "@/models/MeetingRequest";
 import MeetingRequestActions from "./MeetingRequestActions";
+import BackLink from "@/components/admin/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function MeetingRequestDetailPage({
 
   return (
     <div className="max-w-lg">
+      <BackLink href="/admin/dashboard/meeting-requests" label="Back to Meeting Requests" />
       <h1 className="mb-6 text-2xl font-semibold text-navy">Meeting Request</h1>
       <dl className="space-y-3 text-sm">
         <div>

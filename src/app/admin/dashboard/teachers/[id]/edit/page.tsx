@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { Teacher } from "@/models/Teacher";
 import TeacherForm from "../../TeacherForm";
+import BackLink from "@/components/admin/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function EditTeacherPage({
 
   return (
     <div>
+      <BackLink href="/admin/dashboard/teachers" label="Back to Teachers" />
       <h1 className="mb-6 text-2xl font-semibold text-navy">Edit Teacher</h1>
       <TeacherForm
         mode="edit"

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { Announcement } from "@/models/Announcement";
 import AnnouncementForm from "../../AnnouncementForm";
+import BackLink from "@/components/admin/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function EditAnnouncementPage({
 
   return (
     <div>
+      <BackLink href="/admin/dashboard/announcements" label="Back to Announcements" />
       <h1 className="mb-6 text-2xl font-semibold text-navy">Edit Announcement</h1>
       <AnnouncementForm
         mode="edit"

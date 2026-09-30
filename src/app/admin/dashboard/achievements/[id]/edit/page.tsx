@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { Achievement } from "@/models/Achievement";
 import AchievementForm from "../../AchievementForm";
+import BackLink from "@/components/admin/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function EditAchievementPage({
 
   return (
     <div>
+      <BackLink href="/admin/dashboard/achievements" label="Back to Achievements" />
       <h1 className="mb-6 text-2xl font-semibold text-navy">Edit Achievement</h1>
       <AchievementForm
         mode="edit"

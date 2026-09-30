@@ -5,6 +5,7 @@ import { CalendarEvent } from "@/models/CalendarEvent";
 import { SessionApplication } from "@/models/SessionApplication";
 import SessionApplicationActions from "./SessionApplicationActions";
 import type { SessionApplicationStatus } from "@/lib/sessionApplicationStatuses";
+import BackLink from "@/components/admin/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export default async function SessionApplicationsPage({
 
   return (
     <div>
+      <BackLink href="/admin/dashboard/calendar" label="Back to Academic Calendar" />
       <h1 className="mb-2 text-2xl font-semibold text-navy">Applications</h1>
       <p className="mb-6 text-gray-600">
         {session.title} — {session.applicantCount}/{session.capacity} spots reserved
