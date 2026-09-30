@@ -3,7 +3,6 @@ import { z } from "zod";
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { Teacher } from "@/models/Teacher";
-import { MeetingRequest } from "@/models/MeetingRequest";
 import { validateAndSaveImage, deleteImageFile, ImageValidationError } from "@/lib/imageUpload";
 import { SUBJECTS } from "@/lib/subjects";
 
@@ -131,14 +130,6 @@ export async function DELETE(
   const existing = await Teacher.findById(id);
   if (!existing) {
     return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
-  }
-
-  const hasMeetingRequests = await MeetingRequest.exists({ teacherId: id });
-  if (hasMeetingRequests) {
-    return NextResponse.json(
-      { error: "Cannot delete a teacher with existing meeting requests" },
-      { status: 409 },
-    );
   }
 
   const { photoUrl } = existing;

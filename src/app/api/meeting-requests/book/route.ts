@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoose from "mongoose";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { MeetingRequest } from "@/models/MeetingRequest";
-import { Teacher } from "@/models/Teacher";
-import { isRealDateTime, DATETIME_RE } from "@/lib/dateTime";
 
 const meetingRequestFieldsSchema = z.object({
   parentName: z.string().min(1, "Parent name is required").max(200, "Parent name is too long"),
@@ -17,8 +14,6 @@ const meetingRequestFieldsSchema = z.object({
   parentAddress: z.string().min(1, "Address is required").max(200, "Address is too long"),
   studentName: z.string().min(1, "Student name is required").max(200, "Student name is too long"),
   studentGrade: z.string().min(1, "Grade is required").max(50, "Grade is too long"),
-  teacherId: z.string().min(1, "Teacher is required"),
-  requestedDateTime: z.string().regex(DATETIME_RE, "Invalid date/time"),
   reason: z.string().max(2000, "Reason is too long").optional(),
 });
 
@@ -52,22 +47,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!mongoose.isValidObjectId(parsed.data.teacherId)) {
-    return NextResponse.json({ error: "Invalid teacher" }, { status: 400 });
-  }
-
-  if (!isRealDateTime(parsed.data.requestedDateTime)) {
-    return NextResponse.json({ error: "Invalid date/time" }, { status: 400 });
-  }
-  const requestedDateTime = new Date(`${parsed.data.requestedDateTime}:00.000Z`);
-
   await connectToDatabase();
-
-  const teacher = await Teacher.findById(parsed.data.teacherId);
-  if (!teacher) {
-    return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
-  }
-
   const meetingRequest = await MeetingRequest.create({
     parentName: parsed.data.parentName,
     parentEmail: parsed.data.parentEmail,
@@ -75,9 +55,7 @@ export async function POST(request: NextRequest) {
     parentAddress: parsed.data.parentAddress,
     studentName: parsed.data.studentName,
     studentGrade: parsed.data.studentGrade,
-    teacherId: parsed.data.teacherId,
     reason: parsed.data.reason ?? "",
-    requestedDateTime,
   });
 
   return NextResponse.json({ id: meetingRequest._id.toString() }, { status: 201 });

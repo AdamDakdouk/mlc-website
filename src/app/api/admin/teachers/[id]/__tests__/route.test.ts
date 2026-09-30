@@ -289,34 +289,6 @@ describe("/api/admin/teachers/[id]", () => {
       await expect(access(photoPath)).rejects.toThrow();
     });
 
-    it("returns 409 and does not delete when the teacher has meeting requests", async () => {
-      const { connectToDatabase } = require("@/lib/db");
-      await connectToDatabase();
-      const { Teacher } = require("@/models/Teacher");
-      const { MeetingRequest } = require("@/models/MeetingRequest");
-
-      const existing = await Teacher.create({ name: "T", email: "t@example.com", subjects: ["Math"] });
-      await MeetingRequest.create({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: existing._id,
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
-      });
-
-      const { DELETE } = require("@/app/api/admin/teachers/[id]/route");
-      const res = await DELETE(makeRequest(existing._id.toString()), {
-        params: Promise.resolve({ id: existing._id.toString() }),
-      });
-      expect(res.status).toBe(409);
-
-      const found = await Teacher.findById(existing._id);
-      expect(found).not.toBeNull();
-    });
-
     it("returns 404 for a non-existent id", async () => {
       const { connectToDatabase } = require("@/lib/db");
       await connectToDatabase();

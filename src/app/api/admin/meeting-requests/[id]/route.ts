@@ -3,23 +3,15 @@ import mongoose from "mongoose";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { MeetingRequest } from "@/models/MeetingRequest";
-import { isRealDateTime, DATETIME_RE } from "@/lib/dateTime";
 import { type MeetingRequestStatus } from "@/lib/meetingRequestStatuses";
 
-// MeetingRequest.status is created as "Pending" by the public booking route
-// and only ever transitions away from it here — admin can move a request
-// to Confirmed or Declined, never back to Pending, so this endpoint's input
-// set is deliberately narrower than the model's full status enum. Typed
-// against the shared MeetingRequestStatus union so a typo here, or a future
-// change to the status set, is caught by the compiler.
-const UPDATABLE_STATUSES = [
-  "Confirmed",
-  "Declined",
-] as const satisfies readonly MeetingRequestStatus[];
+// MeetingRequest.status is created as "Pending" by the public route; admin
+// only ever marks it "Contacted" (never back to Pending), so this endpoint's
+// input set is deliberately narrower than the model's full status enum.
+const UPDATABLE_STATUSES = ["Contacted"] as const satisfies readonly MeetingRequestStatus[];
 
 const updateFieldsSchema = z.object({
   status: z.enum(UPDATABLE_STATUSES),
-  confirmedDateTime: z.string().regex(DATETIME_RE, "Invalid date/time").optional(),
 });
 
 const MAX_REQUEST_SIZE = 100 * 1024;
@@ -53,10 +45,6 @@ export async function PUT(
     );
   }
 
-  if (parsed.data.confirmedDateTime && !isRealDateTime(parsed.data.confirmedDateTime)) {
-    return NextResponse.json({ error: "Invalid date/time" }, { status: 400 });
-  }
-
   await connectToDatabase();
   const existing = await MeetingRequest.findById(id);
   if (!existing) {
@@ -64,17 +52,6 @@ export async function PUT(
   }
 
   existing.status = parsed.data.status;
-
-  if (parsed.data.status === "Confirmed") {
-    // Confirming without an explicit adjusted time keeps whatever was
-    // already confirmed (supports re-confirming after an earlier change
-    // without losing it), or falls back to the parent's originally
-    // requested time if nothing has been confirmed yet.
-    existing.confirmedDateTime = parsed.data.confirmedDateTime
-      ? new Date(`${parsed.data.confirmedDateTime}:00.000Z`)
-      : (existing.confirmedDateTime ?? existing.requestedDateTime);
-  }
-
   await existing.save();
 
   return NextResponse.json({ success: true });

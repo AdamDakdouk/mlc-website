@@ -1,24 +1,18 @@
 import Link from "next/link";
 import { connectToDatabase } from "@/lib/db";
 import { MeetingRequest } from "@/models/MeetingRequest";
-import { Teacher } from "@/models/Teacher";
 import type { MeetingRequestStatus } from "@/lib/meetingRequestStatuses";
 
 export const dynamic = "force-dynamic";
 
 const STATUS_BADGE_CLASS: Record<MeetingRequestStatus, string> = {
   Pending: "bg-gray-100 text-gray-700",
-  Confirmed: "bg-navy/10 text-navy",
-  Declined: "bg-maroon/10 text-maroon",
+  Contacted: "bg-navy/10 text-navy",
 };
 
 export default async function MeetingRequestsAdminPage() {
   await connectToDatabase();
-  const [requests, teachers] = await Promise.all([
-    MeetingRequest.find().sort({ createdAt: -1 }).lean(),
-    Teacher.find().select("name").lean(),
-  ]);
-  const teacherNameById = new Map(teachers.map((t) => [t._id.toString(), t.name]));
+  const requests = await MeetingRequest.find().sort({ createdAt: -1 }).lean();
 
   return (
     <div>
@@ -37,10 +31,7 @@ export default async function MeetingRequestsAdminPage() {
                   Student
                 </th>
                 <th scope="col" className="py-2 pr-4">
-                  Teacher
-                </th>
-                <th scope="col" className="py-2 pr-4">
-                  Requested
+                  Submitted
                 </th>
                 <th scope="col" className="py-2 pr-4">
                   Status
@@ -56,10 +47,7 @@ export default async function MeetingRequestsAdminPage() {
                   <td className="py-2 pr-4">{r.parentName}</td>
                   <td className="py-2 pr-4">{r.studentName}</td>
                   <td className="py-2 pr-4 text-gray-600">
-                    {teacherNameById.get(r.teacherId.toString()) ?? "—"}
-                  </td>
-                  <td className="py-2 pr-4 text-gray-600">
-                    {r.requestedDateTime.toLocaleString(undefined, { timeZone: "UTC" })}
+                    {r.createdAt.toLocaleString(undefined, { timeZone: "UTC" })}
                   </td>
                   <td className="py-2 pr-4">
                     <span

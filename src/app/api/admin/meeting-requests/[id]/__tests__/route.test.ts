@@ -24,18 +24,14 @@ describe("PUT/DELETE /api/admin/meeting-requests/[id]", () => {
   async function createMeetingRequest() {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();
-    const { Teacher } = require("@/models/Teacher");
     const { MeetingRequest } = require("@/models/MeetingRequest");
-    const teacher = await Teacher.create({ name: "Mr. Smith", email: "mr.smith@example.com", subjects: ["Math"] });
     return MeetingRequest.create({
       parentName: "Jane Doe",
       parentEmail: "jane@example.com",
       parentPhone: "+961 1 234567",
+      parentAddress: "123 Main St, Bchamoun",
       studentName: "Sam Doe",
       studentGrade: "Grade 5",
-      teacherId: teacher._id,
-      parentAddress: "123 Main St, Bchamoun",
-      requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
     });
   }
 
@@ -47,115 +43,35 @@ describe("PUT/DELETE /api/admin/meeting-requests/[id]", () => {
     });
   }
 
-  it("confirms a request with an explicit adjusted time", async () => {
+  it("marks a request as contacted", async () => {
     const meetingRequest = await createMeetingRequest();
     const { PUT } = require("@/app/api/admin/meeting-requests/[id]/route");
 
-    const res = await PUT(
-      makeRequest("PUT", meetingRequest._id.toString(), {
-        status: "Confirmed",
-        confirmedDateTime: "2026-10-16T14:00",
-      }),
-      { params: Promise.resolve({ id: meetingRequest._id.toString() }) },
-    );
+    const res = await PUT(makeRequest("PUT", meetingRequest._id.toString(), { status: "Contacted" }), {
+      params: Promise.resolve({ id: meetingRequest._id.toString() }),
+    });
     expect(res.status).toBe(200);
 
     const { MeetingRequest } = require("@/models/MeetingRequest");
     const updated = await MeetingRequest.findById(meetingRequest._id);
-    expect(updated.status).toBe("Confirmed");
-    expect(updated.confirmedDateTime.toISOString()).toContain("2026-10-16T14:00");
+    expect(updated.status).toBe("Contacted");
   });
 
-  it("confirms a request without an explicit time, defaulting to the requested time", async () => {
+  it("rejects a status outside the updatable set", async () => {
     const meetingRequest = await createMeetingRequest();
     const { PUT } = require("@/app/api/admin/meeting-requests/[id]/route");
 
-    const res = await PUT(
-      makeRequest("PUT", meetingRequest._id.toString(), { status: "Confirmed" }),
-      { params: Promise.resolve({ id: meetingRequest._id.toString() }) },
-    );
-    expect(res.status).toBe(200);
-
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-    const updated = await MeetingRequest.findById(meetingRequest._id);
-    expect(updated.confirmedDateTime.toISOString()).toBe(
-      meetingRequest.requestedDateTime.toISOString(),
-    );
-  });
-
-  it("preserves a previously-confirmed time across a decline-then-reconfirm cycle", async () => {
-    const meetingRequest = await createMeetingRequest();
-    const { PUT } = require("@/app/api/admin/meeting-requests/[id]/route");
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-
-    await PUT(
-      makeRequest("PUT", meetingRequest._id.toString(), {
-        status: "Confirmed",
-        confirmedDateTime: "2026-10-20T09:00",
-      }),
-      { params: Promise.resolve({ id: meetingRequest._id.toString() }) },
-    );
-
-    await PUT(
-      makeRequest("PUT", meetingRequest._id.toString(), { status: "Declined" }),
-      { params: Promise.resolve({ id: meetingRequest._id.toString() }) },
-    );
-
-    const res = await PUT(
-      makeRequest("PUT", meetingRequest._id.toString(), { status: "Confirmed" }),
-      { params: Promise.resolve({ id: meetingRequest._id.toString() }) },
-    );
-    expect(res.status).toBe(200);
-
-    const updated = await MeetingRequest.findById(meetingRequest._id);
-    expect(updated.status).toBe("Confirmed");
-    expect(updated.confirmedDateTime.toISOString()).toContain("2026-10-20T09:00");
-  });
-
-  it("declines a request without touching confirmedDateTime", async () => {
-    const meetingRequest = await createMeetingRequest();
-    const { PUT } = require("@/app/api/admin/meeting-requests/[id]/route");
-
-    const res = await PUT(
-      makeRequest("PUT", meetingRequest._id.toString(), { status: "Declined" }),
-      { params: Promise.resolve({ id: meetingRequest._id.toString() }) },
-    );
-    expect(res.status).toBe(200);
-
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-    const updated = await MeetingRequest.findById(meetingRequest._id);
-    expect(updated.status).toBe("Declined");
-    expect(updated.confirmedDateTime).toBeNull();
-  });
-
-  it("rejects an invalid confirmedDateTime on confirm", async () => {
-    const meetingRequest = await createMeetingRequest();
-    const { PUT } = require("@/app/api/admin/meeting-requests/[id]/route");
-
-    const res = await PUT(
-      makeRequest("PUT", meetingRequest._id.toString(), {
-        status: "Confirmed",
-        confirmedDateTime: "2026-02-30T10:00",
-      }),
-      { params: Promise.resolve({ id: meetingRequest._id.toString() }) },
-    );
-    expect(res.status).toBe(400);
-  });
-
-  it("rejects a status outside the fixed enum", async () => {
-    const meetingRequest = await createMeetingRequest();
-    const { PUT } = require("@/app/api/admin/meeting-requests/[id]/route");
-
-    const res = await PUT(
-      makeRequest("PUT", meetingRequest._id.toString(), { status: "Maybe" }),
-      { params: Promise.resolve({ id: meetingRequest._id.toString() }) },
-    );
-    expect(res.status).toBe(400);
+    for (const status of ["Pending", "Confirmed", "Maybe"]) {
+      const res = await PUT(makeRequest("PUT", meetingRequest._id.toString(), { status }), {
+        params: Promise.resolve({ id: meetingRequest._id.toString() }),
+      });
+      expect(res.status).toBe(400);
+    }
   });
 
   it("returns 400 for a malformed id on PUT", async () => {
     const { PUT } = require("@/app/api/admin/meeting-requests/[id]/route");
-    const res = await PUT(makeRequest("PUT", "not-an-id", { status: "Confirmed" }), {
+    const res = await PUT(makeRequest("PUT", "not-an-id", { status: "Contacted" }), {
       params: Promise.resolve({ id: "not-an-id" }),
     });
     expect(res.status).toBe(400);
@@ -168,7 +84,7 @@ describe("PUT/DELETE /api/admin/meeting-requests/[id]", () => {
     const missingId = new mongooseFresh.Types.ObjectId().toString();
     const { PUT } = require("@/app/api/admin/meeting-requests/[id]/route");
 
-    const res = await PUT(makeRequest("PUT", missingId, { status: "Confirmed" }), {
+    const res = await PUT(makeRequest("PUT", missingId, { status: "Contacted" }), {
       params: Promise.resolve({ id: missingId }),
     });
     expect(res.status).toBe(404);
@@ -183,12 +99,10 @@ describe("PUT/DELETE /api/admin/meeting-requests/[id]", () => {
       {
         method: "PUT",
         headers: { "content-type": "application/json", "content-length": String(100 * 1024 + 1) },
-        body: JSON.stringify({ status: "Confirmed" }),
+        body: JSON.stringify({ status: "Contacted" }),
       },
     );
-    const res = await PUT(request, {
-      params: Promise.resolve({ id: meetingRequest._id.toString() }),
-    });
+    const res = await PUT(request, { params: Promise.resolve({ id: meetingRequest._id.toString() }) });
     expect(res.status).toBe(413);
   });
 

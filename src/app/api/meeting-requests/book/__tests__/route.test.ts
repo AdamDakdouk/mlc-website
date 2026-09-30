@@ -1,5 +1,4 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
-import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 
 describe("POST /api/meeting-requests/book", () => {
@@ -22,6 +21,16 @@ describe("POST /api/meeting-requests/book", () => {
     await mongooseFresh.connection.dropDatabase();
   });
 
+  const validBody = {
+    parentName: "Jane Doe",
+    parentEmail: "jane@example.com",
+    parentPhone: "+961 1 234567",
+    parentAddress: "123 Main St, Bchamoun",
+    studentName: "Sam Doe",
+    studentGrade: "Grade 5",
+    reason: "Discuss progress in Math.",
+  };
+
   function makeRequest(body: unknown) {
     return new NextRequest("http://localhost/api/meeting-requests/book", {
       method: "POST",
@@ -30,26 +39,9 @@ describe("POST /api/meeting-requests/book", () => {
     });
   }
 
-  async function createTeacher() {
+  it("creates a request with all fields", async () => {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();
-    const { Teacher } = require("@/models/Teacher");
-    return Teacher.create({ name: "Mr. Smith", email: "mr.smith@example.com", subjects: ["Math"] });
-  }
-
-  it("creates a request with all fields", async () => {
-    const teacher = await createTeacher();
-    const validBody = {
-      parentName: "Jane Doe",
-      parentEmail: "jane@example.com",
-      parentPhone: "+961 1 234567",
-      studentName: "Sam Doe",
-      studentGrade: "Grade 5",
-      teacherId: teacher._id.toString(),
-      parentAddress: "123 Main St, Bchamoun",
-      requestedDateTime: "2026-10-15T10:00",
-      reason: "Discuss progress in Math.",
-    };
     const { POST } = require("@/app/api/meeting-requests/book/route");
 
     const res = await POST(makeRequest(validBody));
@@ -59,29 +51,20 @@ describe("POST /api/meeting-requests/book", () => {
     const { MeetingRequest } = require("@/models/MeetingRequest");
     const saved = await MeetingRequest.findById(data.id);
     expect(saved.parentName).toBe("Jane Doe");
-    expect(saved.studentGrade).toBe("Grade 5");
-    expect(saved.teacherId.toString()).toBe(teacher._id.toString());
     expect(saved.parentAddress).toBe("123 Main St, Bchamoun");
+    expect(saved.studentGrade).toBe("Grade 5");
     expect(saved.reason).toBe("Discuss progress in Math.");
     expect(saved.status).toBe("Pending");
   });
 
   it("creates a request without a reason, defaulting to empty", async () => {
-    const teacher = await createTeacher();
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
     const { POST } = require("@/app/api/meeting-requests/book/route");
+    const body: Record<string, unknown> = { ...validBody };
+    delete body.reason;
 
-    const res = await POST(
-      makeRequest({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: teacher._id.toString(),
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: "2026-10-15T10:00",
-      }),
-    );
+    const res = await POST(makeRequest(body));
     expect(res.status).toBe(201);
     const data = await res.json();
 
@@ -90,142 +73,40 @@ describe("POST /api/meeting-requests/book", () => {
     expect(saved.reason).toBe("");
   });
 
-  it("rejects a missing parentName", async () => {
-    const teacher = await createTeacher();
+  it.each([
+    "parentName",
+    "parentEmail",
+    "parentPhone",
+    "parentAddress",
+    "studentName",
+    "studentGrade",
+  ])("rejects a missing %s", async (field) => {
     const { POST } = require("@/app/api/meeting-requests/book/route");
-    const res = await POST(
-      makeRequest({
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: teacher._id.toString(),
-        requestedDateTime: "2026-10-15T10:00",
-      }),
-    );
+    const body: Record<string, unknown> = { ...validBody };
+    delete body[field];
+
+    const res = await POST(makeRequest(body));
     expect(res.status).toBe(400);
   });
 
   it("rejects an invalid parentEmail", async () => {
-    const teacher = await createTeacher();
     const { POST } = require("@/app/api/meeting-requests/book/route");
-    const res = await POST(
-      makeRequest({
-        parentName: "Jane Doe",
-        parentEmail: "not-an-email",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: teacher._id.toString(),
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: "2026-10-15T10:00",
-      }),
-    );
+    const res = await POST(makeRequest({ ...validBody, parentEmail: "not-an-email" }));
     expect(res.status).toBe(400);
   });
 
-  it("rejects a malformed requestedDateTime shape", async () => {
-    const teacher = await createTeacher();
+  it("rejects invalid JSON", async () => {
     const { POST } = require("@/app/api/meeting-requests/book/route");
-    const res = await POST(
-      makeRequest({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: teacher._id.toString(),
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: "2026-10-15",
-      }),
-    );
-    expect(res.status).toBe(400);
-  });
-
-  it("rejects a non-existent calendar date/time", async () => {
-    const teacher = await createTeacher();
-    const { POST } = require("@/app/api/meeting-requests/book/route");
-    const res = await POST(
-      makeRequest({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: teacher._id.toString(),
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: "2026-02-30T10:00",
-      }),
-    );
-    expect(res.status).toBe(400);
-  });
-
-  it("rejects a malformed teacherId", async () => {
-    const { POST } = require("@/app/api/meeting-requests/book/route");
-    const res = await POST(
-      makeRequest({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: "not-an-id",
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: "2026-10-15T10:00",
-      }),
-    );
-    expect(res.status).toBe(400);
-  });
-
-  it("rejects a well-formed but non-existent teacherId", async () => {
-    const { connectToDatabase } = require("@/lib/db");
-    await connectToDatabase();
-    const missingId = new mongoose.Types.ObjectId().toString();
-    const { POST } = require("@/app/api/meeting-requests/book/route");
-    const res = await POST(
-      makeRequest({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: missingId,
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: "2026-10-15T10:00",
-      }),
-    );
-    expect(res.status).toBe(404);
-  });
-
-  it("rejects a missing parentAddress", async () => {
-    const teacher = await createTeacher();
-    const { POST } = require("@/app/api/meeting-requests/book/route");
-    const res = await POST(
-      makeRequest({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: teacher._id.toString(),
-        requestedDateTime: "2026-10-15T10:00",
-      }),
-    );
+    const request = new NextRequest("http://localhost/api/meeting-requests/book", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{not json",
+    });
+    const res = await POST(request);
     expect(res.status).toBe(400);
   });
 
   it("rejects a request over the body size limit", async () => {
-    const teacher = await createTeacher();
-    const validBody = {
-      parentName: "Jane Doe",
-      parentEmail: "jane@example.com",
-      parentPhone: "123",
-      studentName: "Sam Doe",
-      studentGrade: "Grade 5",
-      teacherId: teacher._id.toString(),
-      parentAddress: "123 Main St, Bchamoun",
-      requestedDateTime: "2026-10-15T10:00",
-    };
     const { POST } = require("@/app/api/meeting-requests/book/route");
     const request = new NextRequest("http://localhost/api/meeting-requests/book", {
       method: "POST",

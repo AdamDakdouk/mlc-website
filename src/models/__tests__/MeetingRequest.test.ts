@@ -1,5 +1,4 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
-import mongoose from "mongoose";
 
 describe("MeetingRequest model", () => {
   let mongod: MongoMemoryServer;
@@ -21,190 +20,47 @@ describe("MeetingRequest model", () => {
     await mongooseFresh.connection.dropDatabase();
   });
 
-  it("creates a valid request, defaulting status/confirmedDateTime/reason", async () => {
+  const validFields = {
+    parentName: "Jane Doe",
+    parentEmail: "jane@example.com",
+    parentPhone: "+961 1 234567",
+    parentAddress: "123 Main St, Bchamoun",
+    studentName: "Sam Doe",
+    studentGrade: "Grade 5",
+  };
+
+  async function getModel() {
     const { connectToDatabase } = require("@/lib/db");
     await connectToDatabase();
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-    const teacherId = new mongoose.Types.ObjectId();
+    return require("@/models/MeetingRequest").MeetingRequest;
+  }
 
-    const request = await MeetingRequest.create({
-      parentName: "Jane Doe",
-      parentEmail: "jane@example.com",
-      parentPhone: "+961 1 234567",
-      studentName: "Sam Doe",
-      studentGrade: "Grade 5",
-      teacherId,
-      parentAddress: "123 Main St, Bchamoun",
-      requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
-    });
+  it("creates a valid request, defaulting status and reason", async () => {
+    const MeetingRequest = await getModel();
+    const request = await MeetingRequest.create(validFields);
 
     expect(request.status).toBe("Pending");
-    expect(request.confirmedDateTime).toBeNull();
     expect(request.reason).toBe("");
-    expect(request.teacherId.toString()).toBe(teacherId.toString());
   });
 
-  it("rejects a missing parentName", async () => {
-    const { connectToDatabase } = require("@/lib/db");
-    await connectToDatabase();
-    const { MeetingRequest } = require("@/models/MeetingRequest");
+  it.each([
+    "parentName",
+    "parentEmail",
+    "parentPhone",
+    "parentAddress",
+    "studentName",
+    "studentGrade",
+  ])("rejects a missing %s", async (field) => {
+    const MeetingRequest = await getModel();
+    const fields: Record<string, unknown> = { ...validFields };
+    delete fields[field];
 
-    await expect(
-      MeetingRequest.create({
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: new mongoose.Types.ObjectId(),
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
-      }),
-    ).rejects.toThrow();
-  });
-
-  it("rejects a missing parentEmail", async () => {
-    const { connectToDatabase } = require("@/lib/db");
-    await connectToDatabase();
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-
-    await expect(
-      MeetingRequest.create({
-        parentName: "Jane Doe",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: new mongoose.Types.ObjectId(),
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
-      }),
-    ).rejects.toThrow();
-  });
-
-  it("rejects a missing parentPhone", async () => {
-    const { connectToDatabase } = require("@/lib/db");
-    await connectToDatabase();
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-
-    await expect(
-      MeetingRequest.create({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: new mongoose.Types.ObjectId(),
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
-      }),
-    ).rejects.toThrow();
-  });
-
-  it("rejects a missing studentName", async () => {
-    const { connectToDatabase } = require("@/lib/db");
-    await connectToDatabase();
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-
-    await expect(
-      MeetingRequest.create({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentGrade: "Grade 5",
-        teacherId: new mongoose.Types.ObjectId(),
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
-      }),
-    ).rejects.toThrow();
-  });
-
-  it("rejects a missing studentGrade", async () => {
-    const { connectToDatabase } = require("@/lib/db");
-    await connectToDatabase();
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-
-    await expect(
-      MeetingRequest.create({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        teacherId: new mongoose.Types.ObjectId(),
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
-      }),
-    ).rejects.toThrow();
-  });
-
-  it("rejects a missing teacherId", async () => {
-    const { connectToDatabase } = require("@/lib/db");
-    await connectToDatabase();
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-
-    await expect(
-      MeetingRequest.create({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
-      }),
-    ).rejects.toThrow();
-  });
-
-  it("rejects a missing requestedDateTime", async () => {
-    const { connectToDatabase } = require("@/lib/db");
-    await connectToDatabase();
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-
-    await expect(
-      MeetingRequest.create({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: new mongoose.Types.ObjectId(),
-        parentAddress: "123 Main St, Bchamoun",
-      }),
-    ).rejects.toThrow();
+    await expect(MeetingRequest.create(fields)).rejects.toThrow();
   });
 
   it("rejects a status outside the fixed enum", async () => {
-    const { connectToDatabase } = require("@/lib/db");
-    await connectToDatabase();
-    const { MeetingRequest } = require("@/models/MeetingRequest");
+    const MeetingRequest = await getModel();
 
-    await expect(
-      MeetingRequest.create({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: new mongoose.Types.ObjectId(),
-        parentAddress: "123 Main St, Bchamoun",
-        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
-        status: "Maybe",
-      }),
-    ).rejects.toThrow();
-  });
-
-  it("rejects a missing parentAddress", async () => {
-    const { connectToDatabase } = require("@/lib/db");
-    await connectToDatabase();
-    const { MeetingRequest } = require("@/models/MeetingRequest");
-
-    await expect(
-      MeetingRequest.create({
-        parentName: "Jane Doe",
-        parentEmail: "jane@example.com",
-        parentPhone: "123",
-        studentName: "Sam Doe",
-        studentGrade: "Grade 5",
-        teacherId: new mongoose.Types.ObjectId(),
-        requestedDateTime: new Date("2026-10-15T10:00:00.000Z"),
-      }),
-    ).rejects.toThrow();
+    await expect(MeetingRequest.create({ ...validFields, status: "Confirmed" })).rejects.toThrow();
   });
 });

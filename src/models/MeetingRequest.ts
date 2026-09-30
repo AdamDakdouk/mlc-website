@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document, type Model, type Types } from "mongoose";
+import mongoose, { Schema, type Document, type Model } from "mongoose";
 import { MEETING_REQUEST_STATUSES, type MeetingRequestStatus } from "@/lib/meetingRequestStatuses";
 
 export type { MeetingRequestStatus };
@@ -10,10 +10,7 @@ export interface IMeetingRequest extends Document {
   parentAddress: string;
   studentName: string;
   studentGrade: string;
-  teacherId: Types.ObjectId;
   reason: string;
-  requestedDateTime: Date;
-  confirmedDateTime: Date | null;
   status: MeetingRequestStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -57,24 +54,11 @@ const meetingRequestSchema = new Schema<IMeetingRequest>(
       trim: true,
       maxlength: 50,
     },
-    teacherId: {
-      type: Schema.Types.ObjectId,
-      ref: "Teacher",
-      required: true,
-    },
     reason: {
       type: String,
       default: "",
       trim: true,
       maxlength: 2000,
-    },
-    requestedDateTime: {
-      type: Date,
-      required: true,
-    },
-    confirmedDateTime: {
-      type: Date,
-      default: null,
     },
     status: {
       type: String,

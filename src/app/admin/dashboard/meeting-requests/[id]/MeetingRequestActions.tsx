@@ -7,22 +7,17 @@ import type { MeetingRequestStatus } from "@/lib/meetingRequestStatuses";
 interface MeetingRequestActionsProps {
   meetingRequestId: string;
   status: MeetingRequestStatus;
-  requestedDateTime: string;
-  confirmedDateTime: string | null;
 }
 
 export default function MeetingRequestActions({
   meetingRequestId,
   status,
-  requestedDateTime,
-  confirmedDateTime,
 }: MeetingRequestActionsProps) {
   const router = useRouter();
-  const [dateTime, setDateTime] = useState(confirmedDateTime ?? requestedDateTime);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function updateStatus(newStatus: "Confirmed" | "Declined") {
+  async function markContacted() {
     if (loading) return;
     setError(null);
     setLoading(true);
@@ -31,10 +26,7 @@ export default function MeetingRequestActions({
       const res = await fetch(`/api/admin/meeting-requests/${meetingRequestId}`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          status: newStatus,
-          ...(newStatus === "Confirmed" ? { confirmedDateTime: dateTime } : {}),
-        }),
+        body: JSON.stringify({ status: "Contacted" }),
       });
 
       if (!res.ok) {
@@ -81,40 +73,22 @@ export default function MeetingRequestActions({
       <p className="text-sm text-gray-600">
         Current status: <span className="font-medium text-navy">{status}</span>
       </p>
-      <div>
-        <label htmlFor="confirmedDateTime" className="block text-sm font-medium text-navy">
-          Confirmed date &amp; time
-        </label>
-        <input
-          id="confirmedDateTime"
-          type="datetime-local"
-          value={dateTime}
-          onChange={(e) => setDateTime(e.target.value)}
-          className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-navy focus:outline-none"
-        />
-      </div>
       {error && (
         <p role="alert" className="text-sm text-maroon">
           {error}
         </p>
       )}
       <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={() => updateStatus("Confirmed")}
-          disabled={loading}
-          className="rounded bg-navy px-4 py-2 text-sm font-medium text-white transition hover:bg-navy/90 disabled:opacity-50"
-        >
-          Confirm
-        </button>
-        <button
-          type="button"
-          onClick={() => updateStatus("Declined")}
-          disabled={loading}
-          className="rounded border border-maroon px-4 py-2 text-sm font-medium text-maroon transition hover:bg-maroon/10 disabled:opacity-50"
-        >
-          Decline
-        </button>
+        {status === "Pending" && (
+          <button
+            type="button"
+            onClick={markContacted}
+            disabled={loading}
+            className="rounded bg-navy px-4 py-2 text-sm font-medium text-white transition hover:bg-navy/90 disabled:opacity-50"
+          >
+            Mark as contacted
+          </button>
+        )}
         <button
           type="button"
           onClick={handleDelete}
