@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { SITE_ADDRESS, SITE_EMAIL, SITE_MAPS_URL, SITE_PHONE } from "@/lib/siteContact";
+import {
+  SITE_ADDRESS,
+  SITE_EMAIL,
+  SITE_MAPS_URL,
+  SITE_PHONE,
+  SITE_PHONE_HREF,
+} from "@/lib/siteContact";
 
 export const metadata: Metadata = {
   title: "Contact — MLC",
@@ -20,7 +26,10 @@ export default function ContactPage() {
         <div>
           <dt className="font-medium text-navy">Phone</dt>
           <dd className="mt-1">
-            <a href={`tel:${SITE_PHONE}`} className="text-gray-700 hover:text-maroon">
+            <a
+              href={SITE_PHONE_HREF}
+              className="font-medium text-navy underline underline-offset-2 transition hover:text-maroon"
+            >
               {SITE_PHONE}
             </a>
           </dd>
@@ -28,7 +37,10 @@ export default function ContactPage() {
         <div>
           <dt className="font-medium text-navy">Email</dt>
           <dd className="mt-1">
-            <a href={`mailto:${SITE_EMAIL}`} className="text-gray-700 hover:text-maroon">
+            <a
+              href={`mailto:${SITE_EMAIL}`}
+              className="font-medium text-navy underline underline-offset-2 transition hover:text-maroon"
+            >
               {SITE_EMAIL}
             </a>
           </dd>
