@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { SITE_ADDRESS } from "@/lib/siteContact";
+import { SITE_ADDRESS, SITE_MAPS_URL } from "@/lib/siteContact";
 
 // Lazily created so tests that mock this module never need real SMTP env
 // vars, and so a missing env var only breaks the code path that actually
@@ -44,6 +44,7 @@ export async function sendSessionConfirmationEmail(
       `Duration: ${params.durationMinutes} minutes`,
       `Price paid: $${params.price}`,
       `Location: ${SITE_ADDRESS}`,
+      `Map: ${SITE_MAPS_URL}`,
       "",
       "See you there!",
       "Modernistic Learning Community",

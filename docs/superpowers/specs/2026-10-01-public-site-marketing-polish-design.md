@@ -44,7 +44,7 @@ Single source of truth for contact details, imported by both the footer and the 
 ```ts
 export const SITE_ADDRESS = "Bchamoun, Mount Lebanon, Lebanon";
 export const SITE_PHONE = "+961 5 000 000";
-export const SITE_EMAIL = "info@mlc.edu.lb";
+export const SITE_EMAIL = "mlc.modernistic@gmail.com";
 ```
 
 These are placeholder values (explicitly flagged as such — see "Placeholder content" below) — real values to be swapped in later by editing this one file.

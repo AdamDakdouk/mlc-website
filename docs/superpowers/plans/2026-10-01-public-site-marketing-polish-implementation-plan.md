@@ -72,7 +72,7 @@ git commit -m "refactor: move public routes into a (public) route group"
 // Placeholder contact details — update once real values are available.
 export const SITE_ADDRESS = "Bchamoun, Mount Lebanon, Lebanon";
 export const SITE_PHONE = "+961 5 000 000";
-export const SITE_EMAIL = "info@mlc.edu.lb";
+export const SITE_EMAIL = "mlc.modernistic@gmail.com";
 ```
 
 - [ ] **Step 2: Verify it compiles**
@@ -730,7 +730,7 @@ On `/`, confirm the hero renders with both CTA buttons working (`/tours`, `/abou
 
 - [ ] **Step 4: About/Contact**
 
-Visit `/about` — confirm the Mission/Story sections render. Visit `/contact` — confirm address/phone/email render, the phone link has `href="tel:+961 5 000 000"`, the email link has `href="mailto:info@mlc.edu.lb"`, and "Get Directions" opens a Google Maps search URL in a new tab.
+Visit `/about` — confirm the Mission/Story sections render. Visit `/contact` — confirm address/phone/email render, the phone link has `href="tel:+961 5 000 000"`, the email link has `href="mailto:mlc.modernistic@gmail.com"`, and "Get Directions" opens a Google Maps search URL in a new tab.
 
 - [ ] **Step 5: Sitemap/robots**
 

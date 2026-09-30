@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SITE_ADDRESS, SITE_EMAIL, SITE_PHONE } from "@/lib/siteContact";
+import { SITE_ADDRESS, SITE_EMAIL, SITE_MAPS_URL, SITE_PHONE } from "@/lib/siteContact";
 
 export const metadata: Metadata = {
   title: "Contact — MLC",
@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
-  const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SITE_ADDRESS)}`;
+  const directionsUrl = SITE_MAPS_URL;
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
