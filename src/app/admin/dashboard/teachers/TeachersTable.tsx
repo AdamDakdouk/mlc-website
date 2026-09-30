@@ -64,7 +64,7 @@ function SortableRow({ row }: { row: TeacherRow }) {
             alt={row.name}
             width={40}
             height={40}
-            className="rounded-full object-cover"
+            className="h-10 w-10 rounded-full object-cover"
           />
         ) : (
           <div aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-full bg-navy/10 text-xs text-navy">

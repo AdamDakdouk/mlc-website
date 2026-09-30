@@ -27,7 +27,9 @@ function getSecurityHeaders() {
         "default-src 'self'",
         `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data:",
+        // blob: lets the admin image cropper preview a just-picked file
+        // client-side before upload.
+        "img-src 'self' data: blob:",
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'self'",

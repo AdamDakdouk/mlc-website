@@ -30,7 +30,7 @@ export default async function TeachersPage() {
                     alt={t.name}
                     width={96}
                     height={96}
-                    className="rounded-full object-cover"
+                    className="h-24 w-24 rounded-full object-cover"
                   />
                 ) : (
                   <div aria-hidden="true" className="flex h-24 w-24 items-center justify-center rounded-full bg-navy/10 text-2xl text-navy">

@@ -143,6 +143,7 @@ export default function AchievementForm({
           name="photo"
           accept="image/jpeg,image/png,image/webp"
           hint="JPEG, PNG, or WebP, max 5MB"
+          crop={{ aspect: 16 / 9 }}
         />
       </div>
       {error && (

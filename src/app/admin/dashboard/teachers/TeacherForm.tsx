@@ -171,7 +171,7 @@ export default function TeacherForm({
               alt=""
               width={64}
               height={64}
-              className="rounded-full object-cover"
+              className="h-16 w-16 rounded-full object-cover"
             />
             <button
               type="button"
@@ -195,6 +195,7 @@ export default function TeacherForm({
           name="photo"
           accept="image/jpeg,image/png,image/webp"
           hint="JPEG, PNG, or WebP, max 5MB"
+          crop={{ aspect: 1, round: true }}
         />
       </div>
       {error && (
