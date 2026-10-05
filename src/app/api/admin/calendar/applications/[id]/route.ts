@@ -112,8 +112,20 @@ export async function DELETE(
     return NextResponse.json({ error: "Application not found" }, { status: 404 });
   }
 
-  await SessionApplication.deleteOne({ _id: id });
+  const { deletedCount } = await SessionApplication.deleteOne({ _id: id });
   await deletePaymentProofFile(existing.paymentProofFilename);
+
+  // applicantCount tracks non-rejected applications. A Rejected one already
+  // released its spot when it was rejected; a Pending or Verified one still
+  // holds it, so deleting that application frees the spot. deletedCount
+  // guards against a concurrent double-delete decrementing twice, and the
+  // applicantCount > 0 filter keeps the counter from ever going negative.
+  if (deletedCount === 1 && existing.status !== "Rejected") {
+    await CalendarEvent.updateOne(
+      { _id: existing.sessionId, applicantCount: { $gt: 0 } },
+      { $inc: { applicantCount: -1 } },
+    );
+  }
 
   return NextResponse.json({ success: true });
 }

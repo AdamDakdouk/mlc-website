@@ -48,9 +48,9 @@ export default function SessionApplicationActions({
   async function handleDelete() {
     if (loading) return;
     const confirmMessage =
-      status === "Pending"
-        ? `Delete this application from "${applicantLabel}"? This cannot be undone and will NOT free up their reserved spot — reject it first if you want to release the spot.`
-        : `Delete this application from "${applicantLabel}"? This cannot be undone.`;
+      status === "Rejected"
+        ? `Delete this application from "${applicantLabel}"? This cannot be undone.`
+        : `Delete this application from "${applicantLabel}"? This cannot be undone and will free up their spot in the session.`;
     if (!confirm(confirmMessage)) return;
     setError(null);
     setLoading(true);

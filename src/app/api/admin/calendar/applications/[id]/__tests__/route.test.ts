@@ -187,7 +187,7 @@ describe("PUT/DELETE /api/admin/calendar/applications/[id]", () => {
   });
 
   describe("DELETE", () => {
-    it("deletes an application and its proof file, without touching applicantCount", async () => {
+    it("deletes an application and its proof file, and frees its spot", async () => {
       const { application, session } = await createApplication();
       const { validateAndSavePaymentProof } = require("@/lib/paymentProofUpload");
       const realProof = await validateAndSavePaymentProof(
@@ -212,7 +212,49 @@ describe("PUT/DELETE /api/admin/calendar/applications/[id]", () => {
 
       const { CalendarEvent } = require("@/models/CalendarEvent");
       const updatedSession = await CalendarEvent.findById(session._id);
-      expect(updatedSession.applicantCount).toBe(1);
+      expect(updatedSession.applicantCount).toBe(0);
+    });
+
+    it("frees the spot when deleting a Verified application", async () => {
+      const { application, session } = await createApplication(3);
+      application.status = "Verified";
+      await application.save();
+
+      const { DELETE } = require("@/app/api/admin/calendar/applications/[id]/route");
+      await DELETE(makeRequest("DELETE", application._id.toString()), {
+        params: Promise.resolve({ id: application._id.toString() }),
+      });
+
+      const { CalendarEvent } = require("@/models/CalendarEvent");
+      expect((await CalendarEvent.findById(session._id)).applicantCount).toBe(2);
+    });
+
+    it("does not free a spot a second time when deleting a Rejected application", async () => {
+      // Rejecting already released the spot, so applicantCount is already 0 here.
+      const { application, session } = await createApplication(0);
+      application.status = "Rejected";
+      await application.save();
+
+      const { DELETE } = require("@/app/api/admin/calendar/applications/[id]/route");
+      const res = await DELETE(makeRequest("DELETE", application._id.toString()), {
+        params: Promise.resolve({ id: application._id.toString() }),
+      });
+      expect(res.status).toBe(200);
+
+      const { CalendarEvent } = require("@/models/CalendarEvent");
+      expect((await CalendarEvent.findById(session._id)).applicantCount).toBe(0);
+    });
+
+    it("never lets applicantCount go below zero", async () => {
+      const { application, session } = await createApplication(0);
+
+      const { DELETE } = require("@/app/api/admin/calendar/applications/[id]/route");
+      await DELETE(makeRequest("DELETE", application._id.toString()), {
+        params: Promise.resolve({ id: application._id.toString() }),
+      });
+
+      const { CalendarEvent } = require("@/models/CalendarEvent");
+      expect((await CalendarEvent.findById(session._id)).applicantCount).toBe(0);
     });
 
     it("returns 400 for a malformed id", async () => {

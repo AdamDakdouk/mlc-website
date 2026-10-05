@@ -70,7 +70,7 @@ export default function SiteHeader() {
           <span className="text-lg font-semibold text-navy">MLC</span>
         </Link>
 
-        <nav className="hidden items-center gap-6 sm:flex">
+        <nav className="hidden items-center gap-5 lg:flex xl:gap-6">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -93,7 +93,7 @@ export default function SiteHeader() {
           aria-expanded={menuOpen}
           aria-controls="mobile-nav-panel"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
-          className="flex h-10 w-10 items-center justify-center rounded text-navy sm:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded text-navy lg:hidden"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-6 w-6">
             {menuOpen ? (
@@ -109,7 +109,7 @@ export default function SiteHeader() {
         <nav
           id="mobile-nav-panel"
           ref={panelRef}
-          className="border-t border-gray-200 bg-white px-6 py-4 sm:hidden"
+          className="border-t border-gray-200 bg-white px-6 py-4 lg:hidden"
         >
           <div className="flex flex-col gap-4">
             {NAV_LINKS.map((link) => (
