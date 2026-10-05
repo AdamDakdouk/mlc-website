@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { GridDay, GridEvent } from "./monthUtils";
+import { hasDatePassed } from "@/lib/dateTime";
 import { CATEGORY_BG_CLASS, CATEGORY_TEXT_CLASS, type Category } from "@/lib/calendarCategories";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -124,7 +125,7 @@ function SessionDetails({ event }: { event: GridEvent }) {
   const applicantCount = event.applicantCount ?? 0;
   const spotsRemaining = capacity - applicantCount;
   const isFull = spotsRemaining <= 0;
-  const hasPassed = event.sessionDateTime ? new Date(event.sessionDateTime).getTime() <= Date.now() : false;
+  const hasPassed = event.sessionDateTime ? hasDatePassed(event.sessionDateTime) : false;
 
   return (
     <dl className="mt-3 space-y-1 text-sm text-gray-700">

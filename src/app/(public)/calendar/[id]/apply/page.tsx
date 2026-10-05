@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { connectToDatabase } from "@/lib/db";
 import { CalendarEvent } from "@/models/CalendarEvent";
 import { Teacher } from "@/models/Teacher";
+import { hasDatePassed } from "@/lib/dateTime";
 import { SITE_WHISH_CONTACT } from "@/lib/siteContact";
 import SessionApplyForm from "./SessionApplyForm";
 
@@ -37,7 +38,7 @@ export default async function SessionApplyPage({
     : null;
 
   const spotsRemaining = (session.capacity ?? 0) - (session.applicantCount ?? 0);
-  const hasPassed = session.sessionDateTime ? session.sessionDateTime.getTime() <= Date.now() : false;
+  const hasPassed = session.sessionDateTime ? hasDatePassed(session.sessionDateTime) : false;
   const isFull = spotsRemaining <= 0;
 
   return (

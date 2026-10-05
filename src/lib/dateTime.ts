@@ -10,3 +10,8 @@ export function isRealDateTime(value: string): boolean {
   }
   return date.toISOString().slice(0, 16) === value;
 }
+
+// Lives here (not inline in components) so render code stays pure per react-hooks/purity.
+export function hasDatePassed(value: Date | string): boolean {
+  return new Date(value).getTime() <= Date.now();
+}
