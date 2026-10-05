@@ -6,6 +6,7 @@ import { JobPosting } from "@/models/JobPosting";
 import { Application } from "@/models/Application";
 import { validateAndSaveResume, deleteResumeFile, ResumeValidationError } from "@/lib/resumeUpload";
 import { HONEYPOT_FIELD, isHoneypotTripped, rateLimitPublicSubmission } from "@/lib/publicFormGuard";
+import { notifyAdmin } from "@/lib/adminNotifications";
 
 const applicationFieldsSchema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Name is too long"),
@@ -111,6 +112,19 @@ export async function POST(
     await deleteResumeFile(resumeFilename);
     throw err;
   }
+
+  await notifyAdmin({
+    subject: `New job application: ${posting.title}`,
+    replyTo: parsed.data.email,
+    details: [
+      ["Position", posting.title],
+      ["Name", parsed.data.name],
+      ["Email", parsed.data.email],
+      ["Phone", parsed.data.phone],
+      ["Cover note", parsed.data.coverNote ?? ""],
+    ],
+    adminUrl: `${request.nextUrl.origin}/admin/dashboard/careers/${id}/applications`,
+  });
 
   return NextResponse.json({ success: true }, { status: 201 });
 }

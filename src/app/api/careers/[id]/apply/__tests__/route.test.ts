@@ -4,6 +4,10 @@ import { deleteResumeFile } from "@/lib/resumeUpload";
 
 const PDF_BYTES = Buffer.from("%PDF-1.4\ntest resume content");
 
+jest.mock("@/lib/mailer", () => ({
+  sendAdminNotificationEmail: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe("POST /api/careers/[id]/apply", () => {
   let mongod: MongoMemoryServer;
   const createdResumeFilenames: string[] = [];
@@ -21,6 +25,8 @@ describe("POST /api/careers/[id]/apply", () => {
   });
 
   afterEach(async () => {
+    delete process.env.SMTP_HOST;
+    require("@/lib/mailer").sendAdminNotificationEmail.mockClear();
     require("@/lib/rateLimit").resetRateLimit("careers-apply:unknown");
     const mongooseFresh = require("mongoose");
     await mongooseFresh.connection.dropDatabase();
@@ -245,5 +251,40 @@ describe("POST /api/careers/[id]/apply", () => {
     }
     expect(statuses.slice(0, 10).every((s) => s === 400)).toBe(true);
     expect(statuses[10]).toBe(429);
+  });
+
+  it("emails the admin about a new application", async () => {
+    process.env.SMTP_HOST = "smtp.test.local";
+    const posting = await createPosting();
+    const { POST } = require("@/app/api/careers/[id]/apply/route");
+
+    const res = await POST(makeRequest(posting._id.toString(), makeFormData()), {
+      params: Promise.resolve({ id: posting._id.toString() }),
+    });
+    expect(res.status).toBe(201);
+
+    const { Application } = require("@/models/Application");
+    const saved = await Application.findOne({ postingId: posting._id });
+    createdResumeFilenames.push(saved.resumeFilename);
+
+    const { sendAdminNotificationEmail } = require("@/lib/mailer");
+    expect(sendAdminNotificationEmail).toHaveBeenCalledTimes(1);
+    const args = sendAdminNotificationEmail.mock.calls[0][0];
+    expect(args.subject).toBe("New job application: Math Teacher");
+    expect(args.replyTo).toBe("jane@example.com");
+    expect(args.text).toContain(`/admin/dashboard/careers/${posting._id.toString()}/applications`);
+  });
+
+  it("sends no notification when the application is rejected", async () => {
+    process.env.SMTP_HOST = "smtp.test.local";
+    const posting = await createPosting("Closed");
+    const { POST } = require("@/app/api/careers/[id]/apply/route");
+
+    const res = await POST(makeRequest(posting._id.toString(), makeFormData()), {
+      params: Promise.resolve({ id: posting._id.toString() }),
+    });
+    expect(res.status).toBe(404);
+    const { sendAdminNotificationEmail } = require("@/lib/mailer");
+    expect(sendAdminNotificationEmail).not.toHaveBeenCalled();
   });
 });

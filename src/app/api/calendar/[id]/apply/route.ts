@@ -10,6 +10,7 @@ import {
   PaymentProofValidationError,
 } from "@/lib/paymentProofUpload";
 import { HONEYPOT_FIELD, isHoneypotTripped, rateLimitPublicSubmission } from "@/lib/publicFormGuard";
+import { notifyAdmin } from "@/lib/adminNotifications";
 
 const applicationFieldsSchema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Name is too long"),
@@ -127,6 +128,21 @@ export async function POST(
       address: parsed.data.address,
       paymentProofFilename: proofFilename,
     });
+    await notifyAdmin({
+      subject: `New session application: ${session.title}`,
+      replyTo: parsed.data.email,
+      details: [
+        ["Session", session.title],
+        ["Spots taken", `${(reservedSession.applicantCount ?? 0) + 1} of ${session.capacity}`],
+        ["Name", parsed.data.name],
+        ["Email", parsed.data.email],
+        ["Phone", parsed.data.phone],
+        ["Address", parsed.data.address],
+        ["Payment", "Proof uploaded — awaiting verification"],
+      ],
+      adminUrl: `${request.nextUrl.origin}/admin/dashboard/calendar/${id}/applications`,
+    });
+
     return NextResponse.json({ id: application._id.toString() }, { status: 201 });
   } catch (err) {
     await CalendarEvent.updateOne({ _id: id }, { $inc: { applicantCount: -1 } });

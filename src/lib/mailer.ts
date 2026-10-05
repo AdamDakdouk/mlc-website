@@ -12,9 +12,36 @@ function getTransporter() {
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      // A dead or unreachable SMTP server must fail fast instead of
+      // hanging the request (e.g. an admin clicking Verify) for minutes.
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
     });
   }
   return transporter;
+}
+
+const FROM_ADDRESS = '"Modernistic Learning Community" <no-reply@mlc.edu.lb>';
+
+export interface AdminNotificationEmailParams {
+  to: string;
+  subject: string;
+  text: string;
+  // Lets the admin hit "Reply" and write straight to the applicant.
+  replyTo?: string;
+}
+
+export async function sendAdminNotificationEmail(
+  params: AdminNotificationEmailParams,
+): Promise<void> {
+  await getTransporter().sendMail({
+    from: FROM_ADDRESS,
+    to: params.to,
+    replyTo: params.replyTo,
+    subject: params.subject,
+    text: params.text,
+  });
 }
 
 export interface SessionConfirmationEmailParams {
@@ -31,7 +58,7 @@ export async function sendSessionConfirmationEmail(
   params: SessionConfirmationEmailParams,
 ): Promise<void> {
   await getTransporter().sendMail({
-    from: '"Modernistic Learning Community" <no-reply@mlc.edu.lb>',
+    from: FROM_ADDRESS,
     to: params.to,
     subject: `You're confirmed: ${params.sessionTitle}`,
     text: [

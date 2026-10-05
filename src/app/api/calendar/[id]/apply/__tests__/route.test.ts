@@ -4,6 +4,10 @@ import { NextRequest } from "next/server";
 
 const JPEG_BYTES = [0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46];
 
+jest.mock("@/lib/mailer", () => ({
+  sendAdminNotificationEmail: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe("POST /api/calendar/[id]/apply", () => {
   let mongod: MongoMemoryServer;
 
@@ -20,6 +24,8 @@ describe("POST /api/calendar/[id]/apply", () => {
   });
 
   afterEach(async () => {
+    delete process.env.SMTP_HOST;
+    require("@/lib/mailer").sendAdminNotificationEmail.mockClear();
     require("@/lib/rateLimit").resetRateLimit("session-apply:unknown");
     const mongooseFresh = require("mongoose");
     const { SessionApplication } = require("@/models/SessionApplication");
@@ -254,5 +260,35 @@ describe("POST /api/calendar/[id]/apply", () => {
     }
     expect(statuses.slice(0, 10).every((s) => s === 400)).toBe(true);
     expect(statuses[10]).toBe(429);
+  });
+
+  it("emails the admin about a new application, including spots taken", async () => {
+    process.env.SMTP_HOST = "smtp.test.local";
+    const session = await createSession({ capacity: 5, applicantCount: 2 });
+    const id = session._id.toString();
+    const { POST } = require("@/app/api/calendar/[id]/apply/route");
+
+    const res = await POST(makeRequest(id, makeFormData()), { params: Promise.resolve({ id }) });
+    expect(res.status).toBe(201);
+
+    const { sendAdminNotificationEmail } = require("@/lib/mailer");
+    expect(sendAdminNotificationEmail).toHaveBeenCalledTimes(1);
+    const args = sendAdminNotificationEmail.mock.calls[0][0];
+    expect(args.subject).toBe("New session application: Math Session");
+    expect(args.replyTo).toBe("jane@example.com");
+    expect(args.text).toContain("Spots taken: 3 of 5");
+    expect(args.text).toContain(`/admin/dashboard/calendar/${id}/applications`);
+  });
+
+  it("sends no notification when the session is full", async () => {
+    process.env.SMTP_HOST = "smtp.test.local";
+    const session = await createSession({ capacity: 1, applicantCount: 1 });
+    const id = session._id.toString();
+    const { POST } = require("@/app/api/calendar/[id]/apply/route");
+
+    const res = await POST(makeRequest(id, makeFormData()), { params: Promise.resolve({ id }) });
+    expect(res.status).toBe(409);
+    const { sendAdminNotificationEmail } = require("@/lib/mailer");
+    expect(sendAdminNotificationEmail).not.toHaveBeenCalled();
   });
 });

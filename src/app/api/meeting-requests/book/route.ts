@@ -3,6 +3,7 @@ import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { MeetingRequest } from "@/models/MeetingRequest";
 import { HONEYPOT_FIELD, isHoneypotTripped, rateLimitPublicSubmission } from "@/lib/publicFormGuard";
+import { notifyAdmin } from "@/lib/adminNotifications";
 
 const meetingRequestFieldsSchema = z.object({
   parentName: z.string().min(1, "Parent name is required").max(200, "Parent name is too long"),
@@ -65,6 +66,21 @@ export async function POST(request: NextRequest) {
     studentName: parsed.data.studentName,
     studentGrade: parsed.data.studentGrade,
     reason: parsed.data.reason ?? "",
+  });
+
+  await notifyAdmin({
+    subject: `New meeting request from ${parsed.data.parentName}`,
+    replyTo: parsed.data.parentEmail,
+    details: [
+      ["Parent", parsed.data.parentName],
+      ["Email", parsed.data.parentEmail],
+      ["Phone", parsed.data.parentPhone],
+      ["Address", parsed.data.parentAddress],
+      ["Student", parsed.data.studentName],
+      ["Grade", parsed.data.studentGrade],
+      ["Message", parsed.data.reason ?? ""],
+    ],
+    adminUrl: `${request.nextUrl.origin}/admin/dashboard/meeting-requests/${meetingRequest._id.toString()}`,
   });
 
   return NextResponse.json({ id: meetingRequest._id.toString() }, { status: 201 });
