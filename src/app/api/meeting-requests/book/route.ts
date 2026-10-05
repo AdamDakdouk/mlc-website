@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { MeetingRequest } from "@/models/MeetingRequest";
+import { HONEYPOT_FIELD, isHoneypotTripped, rateLimitPublicSubmission } from "@/lib/publicFormGuard";
 
 const meetingRequestFieldsSchema = z.object({
   parentName: z.string().min(1, "Parent name is required").max(200, "Parent name is too long"),
@@ -27,6 +28,9 @@ const meetingRequestFieldsSchema = z.object({
 const MAX_REQUEST_SIZE = 100 * 1024;
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimitPublicSubmission(request, "meeting-request");
+  if (limited) return limited;
+
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_SIZE) {
     return NextResponse.json({ error: "Request too large" }, { status: 413 });
@@ -37,6 +41,11 @@ export async function POST(request: NextRequest) {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  // Honeypot tripped: pretend success so the bot learns nothing, save nothing.
+  if (isHoneypotTripped((body as Record<string, unknown> | null)?.[HONEYPOT_FIELD])) {
+    return NextResponse.json({ id: "000000000000000000000000" }, { status: 201 });
   }
 
   const parsed = meetingRequestFieldsSchema.safeParse(body);

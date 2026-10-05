@@ -9,6 +9,7 @@ import {
   deletePaymentProofFile,
   PaymentProofValidationError,
 } from "@/lib/paymentProofUpload";
+import { HONEYPOT_FIELD, isHoneypotTripped, rateLimitPublicSubmission } from "@/lib/publicFormGuard";
 
 const applicationFieldsSchema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Name is too long"),
@@ -34,6 +35,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const limited = rateLimitPublicSubmission(request, "session-apply");
+  if (limited) return limited;
+
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_SIZE) {
     return NextResponse.json({ error: "Request too large" }, { status: 413 });
@@ -49,6 +53,12 @@ export async function POST(
     formData = await request.formData();
   } catch {
     return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
+  }
+
+  // Honeypot tripped: pretend success so the bot learns nothing, save nothing
+  // (and, for sessions, reserve no seat).
+  if (isHoneypotTripped(formData.get(HONEYPOT_FIELD))) {
+    return NextResponse.json({ id: "000000000000000000000000" }, { status: 201 });
   }
 
   const parsed = applicationFieldsSchema.safeParse({

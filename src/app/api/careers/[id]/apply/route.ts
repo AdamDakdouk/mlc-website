@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/db";
 import { JobPosting } from "@/models/JobPosting";
 import { Application } from "@/models/Application";
 import { validateAndSaveResume, deleteResumeFile, ResumeValidationError } from "@/lib/resumeUpload";
+import { HONEYPOT_FIELD, isHoneypotTripped, rateLimitPublicSubmission } from "@/lib/publicFormGuard";
 
 const applicationFieldsSchema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Name is too long"),
@@ -36,6 +37,9 @@ export async function POST(
   // deferred until a hosting target is chosen (see project notes). This is
   // more consequential here than elsewhere since this is the app's only
   // unauthenticated write endpoint.
+  const limited = rateLimitPublicSubmission(request, "careers-apply");
+  if (limited) return limited;
+
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_SIZE) {
     return NextResponse.json({ error: "Request too large" }, { status: 413 });
@@ -51,6 +55,12 @@ export async function POST(
     formData = await request.formData();
   } catch {
     return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
+  }
+
+  // Honeypot tripped: pretend success so the bot learns nothing, save nothing
+  // (and, for sessions, reserve no seat).
+  if (isHoneypotTripped(formData.get(HONEYPOT_FIELD))) {
+    return NextResponse.json({ id: "000000000000000000000000" }, { status: 201 });
   }
 
   const parsed = applicationFieldsSchema.safeParse({

@@ -20,7 +20,13 @@ describe("POST /api/calendar/[id]/apply", () => {
   });
 
   afterEach(async () => {
+    require("@/lib/rateLimit").resetRateLimit("session-apply:unknown");
     const mongooseFresh = require("mongoose");
+    const { SessionApplication } = require("@/models/SessionApplication");
+    const { deletePaymentProofFile } = require("@/lib/paymentProofUpload");
+    for (const application of await SessionApplication.find({})) {
+      await deletePaymentProofFile(application.paymentProofFilename);
+    }
     await mongooseFresh.connection.dropDatabase();
   });
 
@@ -30,6 +36,7 @@ describe("POST /api/calendar/[id]/apply", () => {
     formData.set("email", overrides.email ?? "jane@example.com");
     formData.set("phone", overrides.phone ?? "+961 1 234567");
     formData.set("address", overrides.address ?? "123 Main St, Bchamoun");
+    if ("website" in overrides) formData.set("website", overrides.website);
     if (includeProof) {
       formData.set(
         "paymentProof",
@@ -217,5 +224,35 @@ describe("POST /api/calendar/[id]/apply", () => {
 
     const res = await POST(request, { params: Promise.resolve({ id: session._id.toString() }) });
     expect(res.status).toBe(413);
+  });
+
+  it("pretends success but reserves no seat when the honeypot field is filled", async () => {
+    const session = await createSession({ capacity: 1 });
+    const { POST } = require("@/app/api/calendar/[id]/apply/route");
+
+    const res = await POST(makeRequest(session._id.toString(), makeFormData({ website: "http://spam.example" })), {
+      params: Promise.resolve({ id: session._id.toString() }),
+    });
+    expect(res.status).toBe(201);
+
+    const { CalendarEvent } = require("@/models/CalendarEvent");
+    const { SessionApplication } = require("@/models/SessionApplication");
+    expect((await CalendarEvent.findById(session._id)).applicantCount).toBe(0);
+    expect(await SessionApplication.countDocuments()).toBe(0);
+  });
+
+  it("returns 429 after 10 attempts from the same IP", async () => {
+    const session = await createSession({ capacity: 50 });
+    const { POST } = require("@/app/api/calendar/[id]/apply/route");
+    const id = session._id.toString();
+
+    const statuses: number[] = [];
+    for (let i = 0; i < 11; i++) {
+      // Invalid (no proof) requests still count against the limit.
+      const res = await POST(makeRequest(id, makeFormData({}, false)), { params: Promise.resolve({ id }) });
+      statuses.push(res.status);
+    }
+    expect(statuses.slice(0, 10).every((s) => s === 400)).toBe(true);
+    expect(statuses[10]).toBe(429);
   });
 });

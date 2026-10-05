@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import HoneypotField from "@/components/public/HoneypotField";
 
 export default function SessionApplyForm({ sessionId }: { sessionId: string }) {
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function SessionApplyForm({ sessionId }: { sessionId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-lg space-y-4">
+      <HoneypotField />
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-navy">
           Name

@@ -5,6 +5,7 @@ import { User } from "@/models/User";
 import { verifyPassword } from "@/lib/password";
 import { signToken } from "@/lib/jwt";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/publicFormGuard";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -13,16 +14,6 @@ const loginSchema = z.object({
 
 const RATE_LIMIT = { max: 5, windowMs: 15 * 60 * 1000 };
 const COOKIE_MAX_AGE_SECONDS = 2 * 60 * 60;
-
-// Trusts X-Forwarded-For as-is. This is ONLY safe behind a reverse proxy/CDN
-// that OVERWRITES this header with the real client IP before forwarding
-// (e.g. Vercel, Cloudflare, or an nginx config with proxy_set_header, not
-// proxy_add_header). If this app is ever exposed directly to the internet
-// without such a proxy, a client can spoof this header to defeat rate
-// limiting entirely. Revisit when the production hosting target is chosen.
-function getClientIp(request: NextRequest): string {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-}
 
 function isSameOrigin(request: NextRequest): boolean {
   const origin = request.headers.get("origin");

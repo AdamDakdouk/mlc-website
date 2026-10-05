@@ -21,6 +21,7 @@ describe("POST /api/careers/[id]/apply", () => {
   });
 
   afterEach(async () => {
+    require("@/lib/rateLimit").resetRateLimit("careers-apply:unknown");
     const mongooseFresh = require("mongoose");
     await mongooseFresh.connection.dropDatabase();
     for (const filename of createdResumeFilenames.splice(0)) {
@@ -41,6 +42,7 @@ describe("POST /api/careers/[id]/apply", () => {
     formData.set("email", overrides.email ?? "jane@example.com");
     formData.set("phone", overrides.phone ?? "+961 1 234567");
     if ("coverNote" in overrides) formData.set("coverNote", overrides.coverNote);
+    if ("website" in overrides) formData.set("website", overrides.website);
     if (includeResume) {
       formData.set("resume", new File([PDF_BYTES], "resume.pdf", { type: "application/pdf" }));
     }
@@ -214,5 +216,34 @@ describe("POST /api/careers/[id]/apply", () => {
     // The file that was written before the failed create() must have been
     // removed by the rollback — reading it back should fail.
     await expect(readResumeFile(resumeFilename)).rejects.toThrow();
+  });
+
+  it("pretends success but saves nothing when the honeypot field is filled", async () => {
+    const posting = await createPosting();
+    const { POST } = require("@/app/api/careers/[id]/apply/route");
+
+    const res = await POST(
+      makeRequest(posting._id.toString(), makeFormData({ website: "http://spam.example" })),
+      { params: Promise.resolve({ id: posting._id.toString() }) },
+    );
+    expect(res.status).toBe(201);
+
+    const { Application } = require("@/models/Application");
+    expect(await Application.countDocuments()).toBe(0);
+  });
+
+  it("returns 429 after 10 attempts from the same IP", async () => {
+    const posting = await createPosting();
+    const { POST } = require("@/app/api/careers/[id]/apply/route");
+    const id = posting._id.toString();
+
+    const statuses: number[] = [];
+    for (let i = 0; i < 11; i++) {
+      // Invalid (no resume) requests still count against the limit.
+      const res = await POST(makeRequest(id, makeFormData({}, false)), { params: Promise.resolve({ id }) });
+      statuses.push(res.status);
+    }
+    expect(statuses.slice(0, 10).every((s) => s === 400)).toBe(true);
+    expect(statuses[10]).toBe(429);
   });
 });

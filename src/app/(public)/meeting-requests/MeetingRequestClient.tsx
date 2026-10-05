@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import HoneypotField from "@/components/public/HoneypotField";
 
 const INPUT_CLASS =
   "mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-navy focus:outline-none";
@@ -25,6 +26,7 @@ export default function MeetingRequestClient() {
       studentName: formData.get("studentName"),
       studentGrade: formData.get("studentGrade"),
       reason: formData.get("reason") ?? "",
+      website: formData.get("website") ?? "",
     };
 
     try {
@@ -54,6 +56,7 @@ export default function MeetingRequestClient() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <HoneypotField />
       <div>
         <label htmlFor="parentName" className="block text-sm font-medium text-navy">
           Parent Name

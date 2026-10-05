@@ -17,6 +17,7 @@ describe("POST /api/meeting-requests/book", () => {
   });
 
   afterEach(async () => {
+    require("@/lib/rateLimit").resetRateLimit("meeting-request:unknown");
     const mongooseFresh = require("mongoose");
     await mongooseFresh.connection.dropDatabase();
   });
@@ -115,5 +116,42 @@ describe("POST /api/meeting-requests/book", () => {
     });
     const res = await POST(request);
     expect(res.status).toBe(413);
+  });
+
+  it("pretends success but saves nothing when the honeypot field is filled", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { POST } = require("@/app/api/meeting-requests/book/route");
+
+    const res = await POST(makeRequest({ ...validBody, website: "http://spam.example" }));
+    expect(res.status).toBe(201);
+
+    const { MeetingRequest } = require("@/models/MeetingRequest");
+    expect(await MeetingRequest.countDocuments()).toBe(0);
+  });
+
+  it("accepts an empty honeypot field as a normal submission", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { POST } = require("@/app/api/meeting-requests/book/route");
+
+    const res = await POST(makeRequest({ ...validBody, website: "" }));
+    expect(res.status).toBe(201);
+
+    const { MeetingRequest } = require("@/models/MeetingRequest");
+    expect(await MeetingRequest.countDocuments()).toBe(1);
+  });
+
+  it("returns 429 after 10 submissions from the same IP", async () => {
+    const { connectToDatabase } = require("@/lib/db");
+    await connectToDatabase();
+    const { POST } = require("@/app/api/meeting-requests/book/route");
+
+    const statuses: number[] = [];
+    for (let i = 0; i < 11; i++) {
+      statuses.push((await POST(makeRequest(validBody))).status);
+    }
+    expect(statuses.slice(0, 10).every((s) => s === 201)).toBe(true);
+    expect(statuses[10]).toBe(429);
   });
 });
