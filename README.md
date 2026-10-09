@@ -19,6 +19,10 @@ TypeScript, Next.js (App Router), MongoDB + Mongoose, Tailwind CSS v4.
 
 `npm test` runs the full Jest suite (uses an in-memory MongoDB for DB-touching tests — no local MongoDB required for tests, only for running the app itself).
 
+## Deployment
+
+See `docs/deployment.md` (Render + MongoDB Atlas) and `docs/domain-email-setup-runbook.md` (domain, DNS and email).
+
 ## Project structure
 
 See `docs/superpowers/specs/2026-09-23-foundation-admin-core-design.md` for the architecture this was built from.

@@ -1,8 +1,6 @@
 import type { MetadataRoute } from "next";
 
-// Placeholder domain — update once a real domain is chosen (see project notes
-// on deferred hosting decisions).
-const BASE_URL = "https://mlc.edu.lb";
+import { getSiteUrl } from "@/lib/siteConfig";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -11,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin", "/api"],
     },
-    sitemap: `${BASE_URL}/sitemap.xml`,
+    sitemap: `${getSiteUrl()}/sitemap.xml`,
   };
 }

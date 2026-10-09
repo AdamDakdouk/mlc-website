@@ -22,7 +22,19 @@ function isSameOrigin(request: NextRequest): boolean {
     // Browsers reliably send Origin on cross-site POSTs, which is what we need to block.
     return true;
   }
-  return origin === request.nextUrl.origin;
+  if (origin === request.nextUrl.origin) return true;
+
+  // Behind a hosting proxy that terminates HTTPS, the app sees http:// while
+  // the browser's Origin is https://, so the full-origin comparison above
+  // fails for every real login. Fall back to comparing just the host with
+  // the Host header the browser addressed. A cross-site attacker's request
+  // carries their own site as Origin but still targets our Host, so they
+  // can't match, and a page can't forge either header.
+  try {
+    return new URL(origin).host === request.headers.get("host");
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(request: NextRequest) {

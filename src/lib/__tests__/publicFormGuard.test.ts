@@ -22,6 +22,39 @@ describe("publicFormGuard", () => {
     it("falls back to 'unknown' without the header", () => {
       expect(getClientIp(makeRequest())).toBe("unknown");
     });
+
+    describe("TRUSTED_PROXY_HOPS", () => {
+      const original = process.env.TRUSTED_PROXY_HOPS;
+      afterEach(() => {
+        if (original === undefined) delete process.env.TRUSTED_PROXY_HOPS;
+        else process.env.TRUSTED_PROXY_HOPS = original;
+      });
+
+      it("ignores a client-supplied first entry when one trusted proxy is configured", () => {
+        process.env.TRUSTED_PROXY_HOPS = "1";
+        // 6.6.6.6 was sent by the client; 1.2.3.4 is what the proxy appended.
+        expect(getClientIp(makeRequest("6.6.6.6, 1.2.3.4"))).toBe("1.2.3.4");
+      });
+
+      it("counts from the right for more than one proxy", () => {
+        process.env.TRUSTED_PROXY_HOPS = "2";
+        expect(getClientIp(makeRequest("6.6.6.6, 1.2.3.4, 10.0.0.1"))).toBe("1.2.3.4");
+      });
+
+      it("uses the first entry if there are fewer entries than hops", () => {
+        process.env.TRUSTED_PROXY_HOPS = "3";
+        expect(getClientIp(makeRequest("1.2.3.4"))).toBe("1.2.3.4");
+      });
+
+      it("keeps the first-entry behaviour for unset or invalid values", () => {
+        delete process.env.TRUSTED_PROXY_HOPS;
+        expect(getClientIp(makeRequest("6.6.6.6, 1.2.3.4"))).toBe("6.6.6.6");
+        process.env.TRUSTED_PROXY_HOPS = "abc";
+        expect(getClientIp(makeRequest("6.6.6.6, 1.2.3.4"))).toBe("6.6.6.6");
+        process.env.TRUSTED_PROXY_HOPS = "0";
+        expect(getClientIp(makeRequest("6.6.6.6, 1.2.3.4"))).toBe("6.6.6.6");
+      });
+    });
   });
 
   describe("rateLimitPublicSubmission", () => {

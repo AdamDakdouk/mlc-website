@@ -9,9 +9,6 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().optional(),
-  GOOGLE_PRIVATE_KEY: z.string().optional().transform((v) => v?.replace(/\\n/g, "\n")),
-  GOOGLE_CALENDAR_ID: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

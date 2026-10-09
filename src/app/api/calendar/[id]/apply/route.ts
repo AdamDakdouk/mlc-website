@@ -11,6 +11,7 @@ import {
 } from "@/lib/paymentProofUpload";
 import { HONEYPOT_FIELD, isHoneypotTripped, rateLimitPublicSubmission } from "@/lib/publicFormGuard";
 import { notifyAdmin } from "@/lib/adminNotifications";
+import { getPublicOrigin } from "@/lib/siteConfig";
 
 const applicationFieldsSchema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Name is too long"),
@@ -140,7 +141,7 @@ export async function POST(
         ["Address", parsed.data.address],
         ["Payment", "Proof uploaded — awaiting verification"],
       ],
-      adminUrl: `${request.nextUrl.origin}/admin/dashboard/calendar/${id}/applications`,
+      adminUrl: `${getPublicOrigin(request.nextUrl.origin)}/admin/dashboard/calendar/${id}/applications`,
     });
 
     return NextResponse.json({ id: application._id.toString() }, { status: 201 });

@@ -1,0 +1,43 @@
+# Render Blueprint for the MLC website. Check field names and plan names
+# against Render's current docs before the first deploy.
+services:
+  - type: web
+    name: mlc-website
+    runtime: node
+    region: frankfurt
+    plan: starter # a persistent disk needs a paid instance
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: mlc-uploads
+      mountPath: /var/data
+      sizeGB: 5
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: UPLOAD_ROOT
+        value: /var/data
+      - key: SITE_URL
+        value: https://modernisticlearning.com
+      # Secrets: enter these in the Render dashboard (never commit them).
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: ADMIN_NOTIFY_EMAIL
+        sync: false

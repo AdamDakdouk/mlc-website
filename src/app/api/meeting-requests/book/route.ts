@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 import { MeetingRequest } from "@/models/MeetingRequest";
 import { HONEYPOT_FIELD, isHoneypotTripped, rateLimitPublicSubmission } from "@/lib/publicFormGuard";
 import { notifyAdmin } from "@/lib/adminNotifications";
+import { getPublicOrigin } from "@/lib/siteConfig";
 
 const meetingRequestFieldsSchema = z.object({
   parentName: z.string().min(1, "Parent name is required").max(200, "Parent name is too long"),
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
       ["Grade", parsed.data.studentGrade],
       ["Message", parsed.data.reason ?? ""],
     ],
-    adminUrl: `${request.nextUrl.origin}/admin/dashboard/meeting-requests/${meetingRequest._id.toString()}`,
+    adminUrl: `${getPublicOrigin(request.nextUrl.origin)}/admin/dashboard/meeting-requests/${meetingRequest._id.toString()}`,
   });
 
   return NextResponse.json({ id: meetingRequest._id.toString() }, { status: 201 });

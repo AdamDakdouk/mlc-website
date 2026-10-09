@@ -7,6 +7,7 @@ import { Application } from "@/models/Application";
 import { validateAndSaveResume, deleteResumeFile, ResumeValidationError } from "@/lib/resumeUpload";
 import { HONEYPOT_FIELD, isHoneypotTripped, rateLimitPublicSubmission } from "@/lib/publicFormGuard";
 import { notifyAdmin } from "@/lib/adminNotifications";
+import { getPublicOrigin } from "@/lib/siteConfig";
 
 const applicationFieldsSchema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Name is too long"),
@@ -123,7 +124,7 @@ export async function POST(
       ["Phone", parsed.data.phone],
       ["Cover note", parsed.data.coverNote ?? ""],
     ],
-    adminUrl: `${request.nextUrl.origin}/admin/dashboard/careers/${id}/applications`,
+    adminUrl: `${getPublicOrigin(request.nextUrl.origin)}/admin/dashboard/careers/${id}/applications`,
   });
 
   return NextResponse.json({ success: true }, { status: 201 });

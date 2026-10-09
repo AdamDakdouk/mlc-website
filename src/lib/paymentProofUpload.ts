@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { mkdir, writeFile, unlink, readFile } from "fs/promises";
 import path from "path";
+import { privateUploadsRoot } from "@/lib/storagePaths";
 
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -13,7 +14,6 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 // Deliberately outside `public/` — same reasoning as src/lib/resumeUpload.ts:
 // a payment screenshot is at least as sensitive as a resume and must only
 // ever be reachable through the authenticated admin download route.
-const PRIVATE_ROOT = path.join(process.cwd(), "uploads-private", "payment-proofs");
 
 const FILENAME_RE = /^[0-9a-f-]{36}\.(jpg|png|webp)$/;
 
@@ -67,8 +67,11 @@ export async function validateAndSavePaymentProof(file: File): Promise<string> {
   const ext = ALLOWED_TYPES[detectedType];
   const filename = `${randomUUID()}.${ext}`;
 
-  await mkdir(PRIVATE_ROOT, { recursive: true });
-  await writeFile(path.join(PRIVATE_ROOT, filename), buffer);
+  await mkdir(privateUploadsRoot("payment-proofs"), { recursive: true });
+  // The storage root is chosen at runtime (UPLOAD_ROOT), so the bundler can't
+  // statically scope this path and would otherwise trace the whole project
+  // into the build output.
+  await writeFile(path.join(/*turbopackIgnore: true*/ privateUploadsRoot("payment-proofs"), filename), buffer);
 
   return filename;
 }
@@ -77,7 +80,7 @@ export async function readPaymentProofFile(filename: string): Promise<Buffer> {
   if (!FILENAME_RE.test(filename)) {
     throw new PaymentProofValidationError("Invalid payment proof filename");
   }
-  return readFile(path.join(PRIVATE_ROOT, filename));
+  return readFile(path.join(privateUploadsRoot("payment-proofs"), filename));
 }
 
 export async function deletePaymentProofFile(filename: string): Promise<void> {
@@ -85,7 +88,7 @@ export async function deletePaymentProofFile(filename: string): Promise<void> {
     return;
   }
   try {
-    await unlink(path.join(PRIVATE_ROOT, filename));
+    await unlink(path.join(privateUploadsRoot("payment-proofs"), filename));
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
       throw err;

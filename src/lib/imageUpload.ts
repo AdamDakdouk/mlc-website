@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { mkdir, writeFile, unlink, readFile } from "fs/promises";
 import path from "path";
+import { publicUploadsRoot } from "@/lib/storagePaths";
 
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -10,14 +11,20 @@ const ALLOWED_TYPES: Record<string, string> = {
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
-const UPLOADS_ROOT = path.join(process.cwd(), "public", "uploads");
-
 const ALLOWED_FOLDERS = ["announcements", "teachers", "achievements"] as const;
 type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
 
 function isValidFolder(value: string): value is UploadFolder {
   return (ALLOWED_FOLDERS as readonly string[]).includes(value);
 }
+
+const STORED_FILENAME_RE = /^[0-9a-f-]{36}\.(jpg|png|webp)$/;
+
+const CONTENT_TYPE_BY_EXT: Record<string, string> = {
+  jpg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
 
 export class ImageValidationError extends Error {
   constructor(message: string) {
@@ -74,10 +81,13 @@ export async function validateAndSaveImage(file: File, folder: UploadFolder): Pr
 
   const ext = ALLOWED_TYPES[detectedType];
   const filename = `${randomUUID()}.${ext}`;
-  const uploadDir = path.join(UPLOADS_ROOT, folder);
+  const uploadDir = path.join(publicUploadsRoot(), folder);
 
   await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, filename), buffer);
+  // The storage root is chosen at runtime (UPLOAD_ROOT), so the bundler can't
+  // statically scope this path and would otherwise trace the whole project
+  // into the build output.
+  await writeFile(path.join(/*turbopackIgnore: true*/ uploadDir, filename), buffer);
 
   return `/uploads/${folder}/${filename}`;
 }
@@ -91,19 +101,42 @@ export async function validateAndSaveImage(file: File, folder: UploadFolder): Pr
 // allowlist `validateAndSaveImage` writes use.
 export async function deleteImageFile(imageUrl: string): Promise<void> {
   const filename = path.basename(imageUrl);
-  if (!/^[0-9a-f-]{36}\.(jpg|png|webp)$/.test(filename)) {
+  if (!STORED_FILENAME_RE.test(filename)) {
     return;
   }
   const folder = path.basename(path.dirname(imageUrl));
   if (!isValidFolder(folder)) {
     return;
   }
-  const filePath = path.join(UPLOADS_ROOT, folder, filename);
+  const filePath = path.join(publicUploadsRoot(), folder, filename);
   try {
     await unlink(filePath);
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
       throw err;
     }
+  }
+}
+
+// Reads a previously saved public image for the /uploads route. Both
+// segments come straight from the request URL, so each is validated before
+// touching the filesystem: the folder against the allowlist, the filename
+// against the exact shape validateAndSaveImage generates (UUID + known
+// extension), which also rules out any path traversal. Returns null for
+// anything invalid or missing so the caller can answer 404 uniformly.
+export async function readImageFile(
+  folder: string,
+  filename: string,
+): Promise<{ buffer: Buffer; contentType: string } | null> {
+  if (!isValidFolder(folder) || !STORED_FILENAME_RE.test(filename)) {
+    return null;
+  }
+  try {
+    const buffer = await readFile(path.join(publicUploadsRoot(), folder, filename));
+    const ext = filename.slice(filename.lastIndexOf(".") + 1);
+    return { buffer, contentType: CONTENT_TYPE_BY_EXT[ext] };
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw err;
   }
 }

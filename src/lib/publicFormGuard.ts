@@ -11,14 +11,30 @@ export const HONEYPOT_FIELD = "website";
 // stop a script from filling session seats or flooding the admin inbox.
 const SUBMISSION_LIMIT = { max: 10, windowMs: 60 * 60 * 1000 };
 
-// Trusts X-Forwarded-For as-is. This is ONLY safe behind a reverse proxy/CDN
-// that OVERWRITES this header with the real client IP before forwarding
-// (e.g. Vercel, Cloudflare, or an nginx config with proxy_set_header, not
-// proxy_add_header). If this app is ever exposed directly to the internet
-// without such a proxy, a client can spoof this header to defeat rate
-// limiting entirely. Revisit when the production hosting target is chosen.
+// Behind a reverse proxy the real client IP comes from X-Forwarded-For, but
+// that header is only trustworthy for the entries the proxy itself appended:
+// a client can send its own value, which then sits at the FRONT of the list.
+// Set TRUSTED_PROXY_HOPS to the number of trusted proxies in front of the
+// app and the IP is taken that many entries from the right, where the
+// proxies wrote it (1 = the last entry). Check the right number on the real
+// host (see docs/deployment.md) — too high or too low is wrong either way.
+//
+// Unset keeps the older behaviour of trusting the first entry. That is only
+// safe if the host overwrites the header, and is NOT safe if the app is ever
+// reachable without a proxy that does so.
 export function getClientIp(request: NextRequest): string {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const header = request.headers.get("x-forwarded-for");
+  const entries = header
+    ?.split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  if (!entries || entries.length === 0) return "unknown";
+
+  const hops = Number.parseInt(process.env.TRUSTED_PROXY_HOPS ?? "", 10);
+  if (Number.isInteger(hops) && hops >= 1) {
+    return entries[Math.max(0, entries.length - hops)];
+  }
+  return entries[0];
 }
 
 // Returns a 429 response when this IP has used up its submissions for the

@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { SITE_ADDRESS, SITE_MAPS_URL } from "@/lib/siteContact";
+import { getEmailFrom } from "@/lib/siteConfig";
 
 // Lazily created so tests that mock this module never need real SMTP env
 // vars, and so a missing env var only breaks the code path that actually
@@ -22,8 +23,6 @@ function getTransporter() {
   return transporter;
 }
 
-const FROM_ADDRESS = '"Modernistic Learning Community" <no-reply@mlc.edu.lb>';
-
 export interface AdminNotificationEmailParams {
   to: string;
   subject: string;
@@ -36,7 +35,7 @@ export async function sendAdminNotificationEmail(
   params: AdminNotificationEmailParams,
 ): Promise<void> {
   await getTransporter().sendMail({
-    from: FROM_ADDRESS,
+    from: getEmailFrom(),
     to: params.to,
     replyTo: params.replyTo,
     subject: params.subject,
@@ -58,7 +57,7 @@ export async function sendSessionConfirmationEmail(
   params: SessionConfirmationEmailParams,
 ): Promise<void> {
   await getTransporter().sendMail({
-    from: FROM_ADDRESS,
+    from: getEmailFrom(),
     to: params.to,
     subject: `You're confirmed: ${params.sessionTitle}`,
     text: [

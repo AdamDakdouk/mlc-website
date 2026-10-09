@@ -1,10 +1,9 @@
 import type { MetadataRoute } from "next";
 
-// Placeholder domain — update once a real domain is chosen (see project notes
-// on deferred hosting decisions).
-const BASE_URL = "https://mlc.edu.lb";
+import { getSiteUrl } from "@/lib/siteConfig";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = getSiteUrl();
   const routes = [
     "",
     "/announcements",
@@ -18,7 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   return routes.map((route) => ({
-    url: `${BASE_URL}${route}`,
+    url: `${baseUrl}${route}`,
     lastModified: new Date(),
   }));
 }

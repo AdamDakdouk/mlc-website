@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { mkdir, writeFile, unlink, readFile } from "fs/promises";
 import path from "path";
+import { privateUploadsRoot } from "@/lib/storagePaths";
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
@@ -8,7 +9,6 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 // sibling pattern used for public images. A resume contains applicant PII
 // and must only ever be reachable through the authenticated admin download
 // route, never as a static file Next.js would otherwise serve directly.
-const PRIVATE_ROOT = path.join(process.cwd(), "uploads-private", "resumes");
 
 const FILENAME_RE = /^[0-9a-f-]{36}\.pdf$/;
 
@@ -36,8 +36,8 @@ export async function validateAndSaveResume(file: File): Promise<string> {
   }
 
   const filename = `${randomUUID()}.pdf`;
-  await mkdir(PRIVATE_ROOT, { recursive: true });
-  await writeFile(path.join(PRIVATE_ROOT, filename), buffer);
+  await mkdir(privateUploadsRoot("resumes"), { recursive: true });
+  await writeFile(path.join(privateUploadsRoot("resumes"), filename), buffer);
 
   return filename;
 }
@@ -46,7 +46,7 @@ export async function readResumeFile(filename: string): Promise<Buffer> {
   if (!FILENAME_RE.test(filename)) {
     throw new ResumeValidationError("Invalid resume filename");
   }
-  return readFile(path.join(PRIVATE_ROOT, filename));
+  return readFile(path.join(privateUploadsRoot("resumes"), filename));
 }
 
 export async function deleteResumeFile(filename: string): Promise<void> {
@@ -54,7 +54,7 @@ export async function deleteResumeFile(filename: string): Promise<void> {
     return;
   }
   try {
-    await unlink(path.join(PRIVATE_ROOT, filename));
+    await unlink(path.join(privateUploadsRoot("resumes"), filename));
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
       throw err;
